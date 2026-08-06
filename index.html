@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Starlink Argentina — Panel de Ventas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg: #FFFFFF;
+    --panel: #FFFFFF;
+    --panel-2: #F4F5F8;
+    --line: #E1E4EA;
+    --text: #0B0E14;
+    --muted: #5B6472;
+    --muted-2: #8890A0;
+    --signal-1: #0E9E8C; /* teal - primary */
+    --signal-2: #C9861A; /* amber - secondary / promo */
+    --signal-3: #6E5CD9; /* violet - tertiary */
+    --signal-4: #D6432F; /* coral - alert / decline */
+    --signal-5: #2F6FE0; /* blue - quaternary */
+    --good: #0E9E8C;
+    --bad: #D6432F;
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 12% -10%, rgba(14,158,140,0.05), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(110,92,217,0.04), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  .wrap{max-width:1320px;margin:0 auto;padding:28px 24px 80px;}
+
+  /* Header */
+  header.top{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    gap:20px; flex-wrap:wrap;
+    padding-bottom:22px; margin-bottom:22px;
+    border-bottom:1px solid var(--line);
+  }
+  .brand{display:flex; align-items:center; gap:16px;}
+  .logo-slot{display:flex; align-items:center; height:34px;}
+  .logo-slot img{height:30px; width:auto; display:block;}
+  .logo-text{
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.25rem;
+    letter-spacing:0.03em; color:var(--text); align-items:center;
+  }
+  .brand-divider{width:1px; height:30px; background:var(--line);}
+  h1{
+    font-family:'Space Grotesk',sans-serif; font-weight:700;
+    font-size:1.5rem; margin:0; letter-spacing:-0.01em;
+  }
+  .subtitle{color:var(--muted); font-size:0.85rem; margin-top:2px; font-family:'JetBrains Mono',monospace; letter-spacing:0.01em;}
+  .meta-tag{
+    font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--signal-1);
+    background:rgba(63,214,192,0.09); border:1px solid rgba(63,214,192,0.25);
+    padding:5px 10px; border-radius:20px; white-space:nowrap;
+  }
+
+  /* KPI strip */
+  .kpi-row{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:26px;
+  }
+  .kpi{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 1px 2px rgba(16,24,40,0.04);
+    padding:16px 16px 14px;
+  }
+  .kpi .label{font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted-2); font-weight:600;}
+  .kpi .value{font-family:'Space Grotesk',sans-serif; font-size:1.55rem; font-weight:700; margin-top:6px;}
+  .kpi .sub{font-size:0.74rem; color:var(--muted); margin-top:3px;}
+  .bars{display:flex; align-items:flex-end; gap:2px; height:20px; margin-top:8px;}
+  .bars i{flex:1; background:var(--signal-1); border-radius:1px; opacity:0.85; display:block;}
+
+  /* Filters */
+  .filters{
+    display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start;
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 1px 2px rgba(16,24,40,0.04);
+    padding:16px 18px; margin-bottom:22px;
+  }
+  .filter-group{display:flex; flex-direction:column; gap:7px;}
+  .filter-group .fl-label{font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted-2); font-weight:600;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; max-width:480px;}
+  .chip{
+    font-family:'JetBrains Mono',monospace; font-size:0.72rem; padding:5px 10px;
+    border-radius:15px; border:1px solid var(--line); color:var(--muted); cursor:pointer;
+    background:var(--panel-2); user-select:none; transition:all .12s ease;
+  }
+  .chip:hover{border-color:var(--signal-1); color:var(--text);}
+  .chip.active{background:rgba(63,214,192,0.14); border-color:var(--signal-1); color:var(--signal-1);}
+  .reset-btn{
+    font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--muted);
+    background:none; border:1px solid var(--line); border-radius:15px; padding:5px 12px;
+    cursor:pointer; align-self:flex-start; margin-top:auto;
+  }
+  .reset-btn:hover{color:var(--signal-4); border-color:var(--signal-4);}
+  .week-range{display:flex; align-items:center; gap:6px;}
+  .week-input{
+    width:56px; background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:5px 7px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.78rem;
+  }
+  .week-input:focus{outline:none; border-color:var(--signal-1);}
+  .week-sep{color:var(--muted-2); font-size:0.75rem;}
+
+  /* Tabs */
+  .tabs{display:flex; gap:6px; margin-bottom:20px; border-bottom:1px solid var(--line);}
+  .tab-btn{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:0.92rem;
+    background:none; border:none; color:var(--muted); padding:10px 4px; margin-right:22px;
+    cursor:pointer; position:relative; top:1px; border-bottom:2px solid transparent;
+  }
+  .tab-btn .n{font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--muted-2); margin-right:6px;}
+  .tab-btn.active{color:var(--text); border-bottom:2px solid var(--signal-1);}
+  .tab-btn.active .n{color:var(--signal-1);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  /* Data table */
+  .table-toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;}
+  .search-box{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:8px 12px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.8rem;
+    width:260px;
+  }
+  .search-box:focus{outline:none; border-color:var(--signal-1);}
+  .row-count{font-size:0.78rem; color:var(--muted); font-family:'JetBrains Mono',monospace;}
+  .table-scroll{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 1px 2px rgba(16,24,40,0.04);
+    overflow:auto; max-height:640px;
+  }
+  table{width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:0.8rem;}
+  thead th{
+    position:sticky; top:0; background:var(--panel-2); text-align:left; padding:10px 12px;
+    font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); cursor:pointer;
+    border-bottom:1px solid var(--line); white-space:nowrap; z-index:2;
+  }
+  thead th:hover{color:var(--signal-1);}
+  thead th .arrow{color:var(--signal-1); margin-left:4px;}
+  tbody td{padding:8px 12px; border-bottom:1px solid rgba(15,23,42,0.08); color:var(--text); white-space:nowrap;}
+  tbody tr:hover{background:rgba(63,214,192,0.05);}
+  tbody tr:nth-child(even){background:rgba(255,255,255,0.012);}
+  .qty-cell{text-align:right; font-weight:600;}
+  .qty-zero{color:var(--muted-2); font-weight:400;}
+  .tag-promo{
+    font-size:0.68rem; padding:2px 7px; border-radius:10px;
+    background:rgba(242,184,75,0.14); color:var(--signal-2); border:1px solid rgba(242,184,75,0.3);
+  }
+  .tag-none{color:var(--muted-2); font-size:0.68rem;}
+  .pagination{display:flex; justify-content:center; align-items:center; gap:14px; margin-top:14px; font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--muted);}
+  .pagination button{
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    border-radius:6px; padding:6px 12px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:0.78rem;
+  }
+  .pagination button:disabled{opacity:0.35; cursor:not-allowed;}
+  .pagination button:not(:disabled):hover{border-color:var(--signal-1);}
+
+  /* Charts grid */
+  .chart-grid{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .chart-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 1px 2px rgba(16,24,40,0.04);
+    padding:18px 18px 10px;
+  }
+  .chart-card.full{grid-column:1 / -1;}
+  .chart-card h3{
+    font-family:'Space Grotesk',sans-serif; font-size:0.95rem; margin:0 0 3px; font-weight:600;
+  }
+  .chart-card p.desc{color:var(--muted); font-size:0.78rem; margin:0 0 14px;}
+  .chart-holder{position:relative; height:280px;}
+  .chart-holder.tall{height:340px;}
+
+  /* Insights */
+  .insight-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:18px;}
+  .insight-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 1px 2px rgba(16,24,40,0.04);
+    padding:20px; position:relative; overflow:hidden;
+  }
+  .insight-card::before{
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:var(--accent-color, var(--signal-1));
+  }
+  .insight-card .tag{
+    font-family:'JetBrains Mono',monospace; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--accent-color, var(--signal-1)); font-weight:600;
+  }
+  .insight-card .headline{
+    font-family:'Space Grotesk',sans-serif; font-size:1.05rem; font-weight:700; margin:8px 0 8px; line-height:1.3;
+  }
+  .insight-card .stat{
+    font-family:'Space Grotesk',sans-serif; font-size:1.9rem; font-weight:700; color:var(--accent-color, var(--signal-1));
+    margin-bottom:6px;
+  }
+  .insight-card p{color:var(--muted); font-size:0.85rem; line-height:1.5; margin:0;}
+  .notes{
+    background:var(--panel-2); border:1px dashed var(--line); border-radius:var(--radius);
+    padding:16px 18px; font-size:0.8rem; color:var(--muted); line-height:1.6; margin-top:6px;
+  }
+  .notes b{color:var(--text);}
+
+  /* Weekly averages */
+  .avg-summary{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px;}
+  .avg-summary .kpi{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:0 1px 2px rgba(16,24,40,0.04); padding:16px 16px 14px;}
+  .section-title{
+    font-family:'Space Grotesk',sans-serif; font-size:1rem; font-weight:600; margin:26px 0 12px;
+  }
+  .section-title:first-of-type{margin-top:0;}
+  .avg-table-scroll{max-height:420px;}
+  table.avg-table{width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:0.8rem;}
+  table.avg-table thead th{
+    position:sticky; top:0; background:var(--panel-2); text-align:right; padding:10px 12px;
+    font-size:0.66rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted);
+    border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  table.avg-table thead th:first-child{text-align:left;}
+  table.avg-table tbody td{padding:8px 12px; border-bottom:1px solid rgba(15,23,42,0.08); color:var(--text); text-align:right; white-space:nowrap;}
+  table.avg-table tbody td:first-child{text-align:left; font-weight:600;}
+  table.avg-table tbody tr:hover{background:rgba(63,214,192,0.05);}
+  table.avg-table tbody tr.total-row td{font-weight:700; background:rgba(63,214,192,0.06); border-top:1px solid var(--line);}
+  .trend-up{color:var(--signal-1);}
+  .trend-down{color:var(--signal-4);}
+  .trend-flat{color:var(--muted-2);}
+
+  footer{
+    margin-top:40px; padding-top:18px; border-top:1px solid var(--line);
+    color:var(--muted-2); font-size:0.75rem; font-family:'JetBrains Mono',monospace;
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+
+  @media (max-width:980px){
+    .kpi-row{grid-template-columns:repeat(2,1fr);}
+    .chart-grid{grid-template-columns:1fr;}
+    .insight-grid{grid-template-columns:1fr;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .tab-panel.active{animation:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo-slot">
+        <img id="logoImg" src="starlink-logo.png" alt="Starlink"
+             onerror="if(!this.dataset.fallback){this.dataset.fallback='1'; this.src='starlink-logo.svg';} else { this.style.display='none'; document.getElementById('logoText').style.display='inline-flex'; }">
+        <span id="logoText" class="logo-text" style="display:none;">STARLINK</span>
+      </div>
+      <div class="brand-divider"></div>
+      <div>
+        <h1>Panel de Ventas</h1>
+        <div class="subtitle">Argentina · base semanal · retail · modelo · mar 2024 – jun 2026</div>
+      </div>
+    </div>
+    <span class="meta-tag" id="periodTag">— cargando —</span>
+  </header>
+
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <span class="fl-label">Año</span>
+      <div class="chips" id="fYear"></div>
+      <span class="fl-label" style="margin-top:8px;">Mes</span>
+      <div class="chips" id="fMonth"></div>
+    </div>
+    <div class="filter-group">
+      <span class="fl-label">Retail</span>
+      <div class="chips" id="fRetail"></div>
+    </div>
+    <div class="filter-group">
+      <span class="fl-label">Producto</span>
+      <div class="chips" id="fProduct"></div>
+    </div>
+    <div class="filter-group">
+      <span class="fl-label">Promoción</span>
+      <div class="chips" id="fPromo"></div>
+    </div>
+    <div class="filter-group">
+      <span class="fl-label">Semana (rango)</span>
+      <div class="week-range">
+        <input type="number" id="weekMin" class="week-input" min="1" max="52">
+        <span class="week-sep">—</span>
+        <input type="number" id="weekMax" class="week-input" min="1" max="52">
+      </div>
+    </div>
+    <button class="reset-btn" id="resetBtn">↺ Limpiar filtros</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="datos"><span class="n">i.</span>Datos</button>
+    <button class="tab-btn" data-tab="graficos"><span class="n">ii.</span>Gráficos</button>
+    <button class="tab-btn" data-tab="promedios"><span class="n">iii.</span>Promedios semanales</button>
+    <button class="tab-btn" data-tab="forecast"><span class="n">iv.</span>Forecast</button>
+    <button class="tab-btn" data-tab="promolaunch"><span class="n">v.</span>Promos &amp; Lanzamientos</button>
+    <button class="tab-btn" data-tab="insights"><span class="n">vi.</span>Insights</button>
+  </div>
+
+  <!-- TAB: DATOS -->
+  <div class="tab-panel active" id="tab-datos">
+    <div class="table-toolbar">
+      <input class="search-box" id="searchBox" placeholder="Buscar cliente, modelo, campaña...">
+      <span class="row-count" id="rowCount"></span>
+    </div>
+    <div class="table-scroll">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th data-key="f">Fecha</th>
+            <th data-key="s">Sem</th>
+            <th data-key="y">Año</th>
+            <th data-key="c">Cliente</th>
+            <th data-key="r">Retail</th>
+            <th data-key="mo">Modelo</th>
+            <th data-key="p">Producto</th>
+            <th data-key="q" style="text-align:right">Cantidad</th>
+            <th data-key="pr">Promo</th>
+            <th data-key="cp">Campaña</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <button id="prevPage">← Anterior</button>
+      <span id="pageInfo">Página 1</span>
+      <button id="nextPage">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- TAB: GRAFICOS -->
+  <div class="tab-panel" id="tab-graficos">
+    <div class="chart-grid">
+      <div class="chart-card full">
+        <h3>Evolución semanal de unidades</h3>
+        <p class="desc">Volumen total despachado por semana, marzo 2024 – junio 2026, con línea de tendencia (regresión lineal). Los picos coinciden con eventos comerciales (Cyber, Black Friday, Hot Sale).</p>
+        <div class="chart-holder tall"><canvas id="chartWeekly"></canvas></div>
+      </div>
+      <div class="chart-card full">
+        <h3>Evolución de promedios semanales</h3>
+        <p class="desc">Media móvil de 4 y 8 semanas sobre el total filtrado — suaviza la volatilidad semana a semana para ver cómo cambia el ritmo de venta de fondo a lo largo del tiempo.</p>
+        <div class="chart-holder tall"><canvas id="chartWeeklyMA"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Comparación mensual interanual</h3>
+        <p class="desc">Unidades por mes, superpuestas por año, para ver estacionalidad y crecimiento YoY.</p>
+        <div class="chart-holder"><canvas id="chartMonthlyYoY"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Mix de retail por año</h3>
+        <p class="desc">Participación (%) de cada retail sobre el total anual de unidades.</p>
+        <div class="chart-holder"><canvas id="chartClientShare"></canvas></div>
+      </div>
+      <div class="chart-card full">
+        <h3>Evolución semanal del mix por retail</h3>
+        <p class="desc">Participación (%) de cada retail sobre el total de unidades, semana a semana — barras apiladas al 100% para ver el peso relativo de cada uno en cada momento.</p>
+        <div class="chart-holder tall"><canvas id="chartRetailMixWeekly"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Mix de producto</h3>
+        <p class="desc">Distribución de unidades por producto dentro del período filtrado.</p>
+        <div class="chart-holder"><canvas id="chartModelMix"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Impacto de campañas promocionales</h3>
+        <p class="desc">Unidades acumuladas asociadas a cada campaña (excluye ventas sin promoción).</p>
+        <div class="chart-holder"><canvas id="chartCampaigns"></canvas></div>
+      </div>
+      <div class="chart-card full">
+        <h3>Unidades con y sin promoción, por año</h3>
+        <p class="desc">Compara el volumen vendido en promoción vs. precio de lista, por año.</p>
+        <div class="chart-holder"><canvas id="chartPromoByYear"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: PROMEDIOS SEMANALES -->
+  <div class="tab-panel" id="tab-promedios">
+    <div class="avg-summary" id="avgSummary"></div>
+
+    <div class="chart-grid" style="margin-bottom:18px;">
+      <div class="chart-card">
+        <h3>Promedio semanal por producto</h3>
+        <p class="desc">Unidades/semana, solo en semanas donde el producto tuvo venta activa (excluye ceros previos al lanzamiento o post-discontinuación).</p>
+        <div class="chart-holder"><canvas id="chartAvgModel"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Promedio semanal por retail</h3>
+        <p class="desc">Unidades/semana, solo en semanas donde el retail tuvo venta activa.</p>
+        <div class="chart-holder"><canvas id="chartAvgClient"></canvas></div>
+      </div>
+    </div>
+
+    <h3 class="section-title">Por producto</h3>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableAvgModel" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <h3 class="section-title">Por retail</h3>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableAvgClient" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <h3 class="section-title">Detalle retail × producto</h3>
+    <p class="desc" style="margin:-4px 0 12px;">Base para armar el forecast a nivel SKU-retail: promedio semanal activo, tendencia reciente y último dato disponible.</p>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableAvgDetail" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <div class="notes" style="margin-top:16px;">
+      <b>Cómo leer esta sección:</b> <b>Semanas activas</b> = semanas dentro del filtro actual con al menos 1 unidad vendida. <b>Prom/sem (activo)</b> divide el total solo por esas semanas activas — es el mejor punto de partida para un forecast de "ritmo cuando el producto/retail está vendiendo". <b>Prom/sem (período)</b> divide por todas las semanas del filtro, incluyendo ceros — sirve para ver el peso real dentro del total. <b>Prom últimas 8 sem.</b> y <b>Tendencia</b> comparan el ritmo reciente contra el promedio activo histórico, para detectar aceleración o desaceleración antes de proyectar. Todo se recalcula según los filtros de Año, Retail, Producto, Semana y Promoción que elijas arriba.
+    </div>
+  </div>
+
+  <!-- TAB: FORECAST -->
+  <div class="tab-panel" id="tab-forecast">
+    <div class="filters" style="margin-bottom:20px;">
+      <div class="filter-group">
+        <span class="fl-label">Semanas a proyectar</span>
+        <div class="chips" id="fHorizon"></div>
+      </div>
+    </div>
+
+    <div class="avg-summary" id="forecastSummary"></div>
+
+    <div class="chart-card full" style="margin-bottom:18px;">
+      <h3>Proyección semanal — total</h3>
+      <p class="desc">Histórico (línea sólida) + proyección (línea punteada) con banda de incertidumbre, calculada sobre el total filtrado.</p>
+      <div class="chart-holder tall"><canvas id="chartForecastTotal"></canvas></div>
+    </div>
+
+    <div class="chart-grid" style="margin-bottom:18px;">
+      <div class="chart-card">
+        <h3>Proyección próximas semanas por producto</h3>
+        <p class="desc">Unidades/semana proyectadas (promedio del horizonte elegido), por producto.</p>
+        <div class="chart-holder"><canvas id="chartForecastModel"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Proyección próximas semanas por retail</h3>
+        <p class="desc">Unidades/semana proyectadas (promedio del horizonte elegido), por retail.</p>
+        <div class="chart-holder"><canvas id="chartForecastRetail"></canvas></div>
+      </div>
+    </div>
+
+    <h3 class="section-title">Detalle de la proyección — por producto</h3>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableForecastModel" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <h3 class="section-title">Detalle de la proyección — por retail</h3>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableForecastRetail" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <div class="notes" style="margin-top:16px;">
+      <b>Metodología:</b> la proyección usa suavizado exponencial doble (método de Holt) sobre la serie semanal histórica del conjunto filtrado — combina el nivel más reciente con la tendencia de las últimas semanas para estimar cada semana futura. La banda sombreada es un intervalo de referencia (±1.28 desvíos del error de ajuste, ampliado con la raíz del horizonte). <b>Es un modelo simple de tendencia: no anticipa eventos puntuales</b> como Cyber Monday, Black Friday o Hot Sale, cambios de stock, ni lanzamientos de producto — funciona mejor como punto de partida de un forecast, no como predicción definitiva. Ajustá los filtros (Retail, Producto, Promoción) para generar proyecciones más específicas, y compará contra tu criterio comercial antes de tomar decisiones.
+    </div>
+  </div>
+
+  <!-- TAB: PROMOS & LANZAMIENTOS -->
+  <div class="tab-panel" id="tab-promolaunch">
+
+    <h3 class="section-title" style="margin-top:0;">Elasticidad de promociones</h3>
+    <p class="desc" style="margin:-4px 0 16px;">Compara, para cada campaña, el volumen total del mercado (según filtros activos) durante las semanas de la promo contra el promedio de las 4 semanas inmediatamente anteriores, relacionándolo con el % de descuento real de cada una.</p>
+
+    <div class="avg-summary" id="elasticitySummary"></div>
+
+    <div class="chart-card full" style="margin-bottom:18px;">
+      <h3>Descuento vs. crecimiento en ventas</h3>
+      <p class="desc">Cada punto es una campaña con descuento conocido. La línea punteada es la regresión lineal simple entre % de descuento y % de crecimiento vs. el promedio previo.</p>
+      <div class="chart-holder tall"><canvas id="chartElasticity"></canvas></div>
+    </div>
+
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableElasticity" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <div class="notes" style="margin-top:16px;">
+      <b>Cómo leer esta sección:</b> "Crecimiento" compara el promedio semanal de <b>todo el mercado filtrado</b> durante la promo contra el promedio semanal de las 4 semanas previas (no solo las unidades de esa campaña puntual) — así se captura el efecto de arrastre real de la promo sobre el total de ventas. Con pocas campañas de descuento conocido, la regresión es orientativa, no estadísticamente robusta — usala como primera lectura, no como coeficiente de elasticidad definitivo.
+    </div>
+
+    <h3 class="section-title">Análisis de lanzamientos</h3>
+    <p class="desc" style="margin:-4px 0 16px;">Para cada producto, la "semana de lanzamiento" es la primera semana (dentro del filtro activo) con unidades vendidas mayores a cero. Las curvas están alineadas por semanas desde el lanzamiento, no por fecha calendario, para comparar la velocidad de adopción entre productos.</p>
+
+    <div class="chart-card full" style="margin-bottom:18px;">
+      <h3>Curva de adopción por producto</h3>
+      <p class="desc">Unidades vendidas por semana, contadas desde la semana de lanzamiento de cada producto (semana 0 = primera semana con ventas).</p>
+      <div class="chart-holder tall"><canvas id="chartLaunchCurve"></canvas></div>
+    </div>
+
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableLaunch" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <div class="notes" style="margin-top:16px;">
+      <b>Nota:</b> la semana de lanzamiento se calcula sobre los datos que pasan el filtro activo (Retail, Promoción, etc.) — si acotás por un retail específico, la semana de lanzamiento puede correrse hacia adelante respecto al lanzamiento real del producto en el mercado total.
+    </div>
+  </div>
+
+  <!-- TAB: INSIGHTS -->
+  <div class="tab-panel" id="tab-insights">
+    <div class="insight-grid">
+
+      <div class="insight-card" style="--accent-color:var(--signal-4)">
+        <span class="tag">Concentración de cliente</span>
+        <div class="stat">56%</div>
+        <div class="headline">Meli 1P concentra más de la mitad del volumen</div>
+        <p>Su participación subió de 41% en 2024 a 52% en 2025 y 56% en 2026. En paralelo, Frávega cayó de 28% a 8% del mix. La cartera está cada vez más dependiente de un solo canal de venta.</p>
+      </div>
+
+      <div class="insight-card" style="--accent-color:var(--signal-3)">
+        <span class="tag">Ciclo de producto</span>
+        <div class="stat">59%</div>
+        <div class="headline">Mini X llega en 2026 y ya lidera el mix</div>
+        <p>V3 se descontinuó por completo durante 2025 (0% de unidades). Mini dominó 2025 con 82% del volumen, pero en 2026 Mini X capturó 59% del mix frente a solo 27% de Mini — una transición de producto rápida.</p>
+      </div>
+
+      <div class="insight-card" style="--accent-color:var(--signal-2)">
+        <span class="tag">Estacionalidad</span>
+        <div class="stat">22.4k</div>
+        <div class="headline">Cyber Monday es el mayor driver de ventas del año</div>
+        <p>La semana 45 de 2025 (Cyber) registró el pico histórico con 22,369 unidades en una sola semana. La campaña "Cyber" acumuló 33,508 unidades en total, muy por encima de Black Friday (39,534 unidades en varias semanas) y Hot Sale (5,649).</p>
+      </div>
+
+      <div class="insight-card" style="--accent-color:var(--signal-1)">
+        <span class="tag">Dependencia promocional</span>
+        <div class="stat">↓ 14%</div>
+        <div class="headline">Las ventas en promoción caen fuerte en 2026</div>
+        <p>Entre 2024 y 2025 el volumen vendido con algún descuento se mantuvo estable (~39%). En el primer semestre de 2026 esa proporción bajó a 14%, señal de ventas más orgánicas o un cambio deliberado de estrategia comercial.</p>
+      </div>
+
+      <div class="insight-card" style="--accent-color:var(--signal-5)">
+        <span class="tag">Crecimiento</span>
+        <div class="stat">+6.7%</div>
+        <div class="headline">El crecimiento YoY se desacelera tras el boom de 2024–2025</div>
+        <p>El volumen total pasó de 96,316 unidades en 2024 (10 meses) a 400,550 en 2025 — un salto explosivo por la escala inicial del negocio. Comparando semestres equivalentes, H1 2026 (192,865 u.) creció solo 6.7% vs. H1 2025 (180,819 u.), un ritmo mucho más moderado.</p>
+      </div>
+
+      <div class="insight-card" style="--accent-color:var(--signal-4)">
+        <span class="tag">Retail en retroceso</span>
+        <div class="stat">28%→8%</div>
+        <div class="headline">Frávega perdió peso relativo de forma sostenida</div>
+        <p>De representar más de una cuarta parte de las unidades en 2024, Frávega bajó a 16% en 2025 y 8% en 2026. La Anónima y Cetro ganaron terreno relativo en el mismo período, aunque desde una base mucho más chica.</p>
+      </div>
+
+    </div>
+
+    <div class="notes">
+      <b>Notas metodológicas:</b> Las cifras son unidades despachadas (columna "Cantidad"), no incluyen precio ni ingresos ya que la base no trae esa dimensión. El año 2026 está parcial (enero a junio). La columna "Análisis devolución" marca registros a partir de junio 2025 — probablemente un flag operativo para revisión de devoluciones, no se usó para ajustar las cifras de venta. Todas las comparaciones respetan la agrupación semana/mes/cliente/modelo tal como viene en el archivo original.
+    </div>
+  </div>
+
+  <footer>
+    <span>Fuente: Base_ventas_030726.xlsx</span>
+    <span id="footRange"></span>
+  </footer>
+
+</div>
+
+<script>
+let RAW = [];
+
+const MONTH_NAMES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const RETAIL_COLORS = {
+  'Meli': '#0E9E8C', 'Frávega': '#C9861A', 'La Anónima': '#6E5CD9',
+  'On City': '#2F6FE0', 'Cetro': '#D6432F', 'Naldo': '#8890A0'
+};
+const PRODUCT_COLORS = { 'Mini Kit': '#0E9E8C', 'Mini X': '#6E5CD9', 'Standard Kit': '#2F6FE0', 'Mini Car Pack': '#C9861A' };
+
+const state = {
+  years: new Set(), months: new Set(), retail: new Set(), products: new Set(), promo: 'all',
+  weekMin: 1, weekMax: 52, horizon: 8,
+  search: '', sortKey: 'f', sortDir: 1, page: 1, pageSize: 50
+};
+
+let allYears = [], allMonths = [], allRetail = [], allProducts = [], allWeeksNum = [];
+
+function fmt(n){ return Math.round(n).toLocaleString('es-AR'); }
+
+function filtered(){
+  return RAW.filter(d =>
+    state.years.has(d.y) && state.months.has(d.m) && state.retail.has(d.r) &&
+    state.products.has(d.p) &&
+    d.s >= state.weekMin && d.s <= state.weekMax &&
+    (state.promo==='all' || d.pr===state.promo)
+  );
+}
+
+function buildChips(containerId, values, activeSet, labelFn, onToggle){
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  values.forEach(v=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (activeSet.has(v) ? ' active' : '');
+    chip.textContent = labelFn ? labelFn(v) : v;
+    chip.onclick = () => { onToggle(v); };
+    el.appendChild(chip);
+  });
+}
+
+function toggleSetVal(set, v, allValues){
+  if(set.has(v)){
+    set.delete(v);
+    if(set.size===0) allValues.forEach(x=>set.add(x));
+  } else {
+    set.add(v);
+  }
+}
+
+function renderFilters(){
+  buildChips('fYear', allYears, state.years, null, (v)=>{ toggleSetVal(state.years, v, allYears); refreshAll(); });
+  buildChips('fMonth', allMonths, state.months, (v)=>MONTH_NAMES[v], (v)=>{ toggleSetVal(state.months, v, allMonths); refreshAll(); });
+  buildChips('fRetail', allRetail, state.retail, null, (v)=>{ toggleSetVal(state.retail, v, allRetail); refreshAll(); });
+  buildChips('fProduct', allProducts, state.products, null, (v)=>{ toggleSetVal(state.products, v, allProducts); refreshAll(); });
+  const promoEl = document.getElementById('fPromo');
+  promoEl.innerHTML = '';
+  [['all','Todas'],['Si','Con promo'],['No','Sin promo']].forEach(([val,label])=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (state.promo===val ? ' active' : '');
+    chip.textContent = label;
+    chip.onclick = () => { state.promo = val; refreshAll(); };
+    promoEl.appendChild(chip);
+  });
+  const wMin = document.getElementById('weekMin'), wMax = document.getElementById('weekMax');
+  if(document.activeElement !== wMin) wMin.value = state.weekMin;
+  if(document.activeElement !== wMax) wMax.value = state.weekMax;
+
+  const horizonEl = document.getElementById('fHorizon');
+  horizonEl.innerHTML = '';
+  [4,8,12,16].forEach(h=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (state.horizon===h ? ' active' : '');
+    chip.textContent = h + ' sem';
+    chip.onclick = () => { state.horizon = h; refreshAll(); };
+    horizonEl.appendChild(chip);
+  });
+}
+
+function applyWeekRange(){
+  const wMin = document.getElementById('weekMin'), wMax = document.getElementById('weekMax');
+  let lo = parseInt(wMin.value, 10), hi = parseInt(wMax.value, 10);
+  if(isNaN(lo)) lo = allWeeksNum[0];
+  if(isNaN(hi)) hi = allWeeksNum[allWeeksNum.length-1];
+  lo = Math.max(1, Math.min(52, lo));
+  hi = Math.max(1, Math.min(52, hi));
+  if(lo > hi){ const t=lo; lo=hi; hi=t; }
+  state.weekMin = lo; state.weekMax = hi;
+  refreshAll();
+}
+document.getElementById('weekMin').addEventListener('change', applyWeekRange);
+document.getElementById('weekMax').addEventListener('change', applyWeekRange);
+
+document.getElementById('resetBtn').onclick = () => {
+  state.years = new Set(allYears); state.months = new Set(allMonths); state.retail = new Set(allRetail);
+  state.products = new Set(allProducts);
+  state.promo = 'all'; state.search = '';
+  state.weekMin = allWeeksNum[0]; state.weekMax = allWeeksNum[allWeeksNum.length-1];
+  document.getElementById('searchBox').value = '';
+  state.page = 1;
+  refreshAll();
+};
+
+document.getElementById('searchBox').addEventListener('input', (e)=>{
+  state.search = e.target.value.toLowerCase();
+  state.page = 1;
+  renderTable();
+});
+
+document.querySelectorAll('#dataTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(state.sortKey === key){ state.sortDir *= -1; } else { state.sortKey = key; state.sortDir = 1; }
+    renderTable();
+  });
+});
+
+document.getElementById('prevPage').onclick = ()=>{ if(state.page>1){ state.page--; renderTable(); } };
+document.getElementById('nextPage').onclick = ()=>{ state.page++; renderTable(); };
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+function renderKPIs(){
+  const data = filtered();
+  const total = data.reduce((a,d)=>a+d.q,0);
+  const byRetail = {}; data.forEach(d=>byRetail[d.r]=(byRetail[d.r]||0)+d.q);
+  const topRetail = Object.entries(byRetail).sort((a,b)=>b[1]-a[1])[0] || ['—',0];
+  const byModel = {}; data.forEach(d=>byModel[d.p]=(byModel[d.p]||0)+d.q);
+  const topModel = Object.entries(byModel).sort((a,b)=>b[1]-a[1])[0] || ['—',0];
+  const promoQty = data.filter(d=>d.pr==='Si').reduce((a,d)=>a+d.q,0);
+  const weeks = new Set(data.map(d=>d.y+'-'+d.s));
+
+  const byWeek = {};
+  data.forEach(d=>{ const k=d.y*100+d.s; byWeek[k]=(byWeek[k]||0)+d.q; });
+  const weekKeys = Object.keys(byWeek).sort((a,b)=>a-b);
+  const last12 = weekKeys.slice(-12).map(k=>byWeek[k]);
+  const maxW = Math.max(...last12, 1);
+  const barsHtml = '<div class="bars">' + last12.map(v=>`<i style="height:${Math.max(8,(v/maxW*20))}px"></i>`).join('') + '</div>';
+
+  const kpis = [
+    { label:'Unidades totales', value: fmt(total), sub: data.length+' registros', extra: barsHtml },
+    { label:'Semanas activas', value: weeks.size, sub: 'en el rango filtrado' },
+    { label:'Retail líder', value: topRetail[0], sub: total? (topRetail[1]/total*100).toFixed(1)+'% del volumen' : '—' },
+    { label:'Producto líder', value: topModel[0], sub: total? (topModel[1]/total*100).toFixed(1)+'% del volumen' : '—' },
+    { label:'Unidades en promo', value: total? (promoQty/total*100).toFixed(1)+'%' : '0%', sub: fmt(promoQty)+' unidades' },
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(k=>`
+    <div class="kpi">
+      <div class="label">${k.label}</div>
+      <div class="value">${k.value}</div>
+      <div class="sub">${k.sub}</div>
+      ${k.extra || ''}
+    </div>`).join('');
+}
+
+function renderTable(){
+  let data = filtered();
+  if(state.search){
+    data = data.filter(d => (d.c+' '+d.r+' '+d.mo+' '+d.p+' '+d.cp+' '+d.pr).toLowerCase().includes(state.search));
+  }
+  data = data.slice().sort((a,b)=>{
+    let va=a[state.sortKey], vb=b[state.sortKey];
+    if(typeof va === 'string'){ va=va.toLowerCase(); vb=vb.toLowerCase(); }
+    if(va<vb) return -1*state.sortDir; if(va>vb) return 1*state.sortDir; return 0;
+  });
+
+  document.querySelectorAll('#dataTable thead th').forEach(th=>{
+    th.innerHTML = th.textContent.replace(' ▲','').replace(' ▼','');
+    if(th.dataset.key === state.sortKey){
+      th.innerHTML += state.sortDir===1 ? ' <span class="arrow">▲</span>' : ' <span class="arrow">▼</span>';
+    }
+  });
+
+  const totalPages = Math.max(1, Math.ceil(data.length / state.pageSize));
+  if(state.page > totalPages) state.page = totalPages;
+  const startIdx = (state.page-1)*state.pageSize;
+  const pageData = data.slice(startIdx, startIdx+state.pageSize);
+
+  document.getElementById('tableBody').innerHTML = pageData.map(d=>`
+    <tr>
+      <td>${d.f}</td>
+      <td>${d.s}</td>
+      <td>${d.y}</td>
+      <td>${d.c}</td>
+      <td>${d.r}</td>
+      <td>${d.mo}</td>
+      <td>${d.p}</td>
+      <td class="qty-cell ${d.q===0?'qty-zero':''}">${fmt(d.q)}</td>
+      <td>${d.pr==='Si' ? '<span class="tag-promo">'+ (d.cp && d.cp!=='-' ? d.cp : 'Promo') +'</span>' : '<span class="tag-none">—</span>'}</td>
+      <td>${d.cp && d.cp!=='-' ? d.cp : '—'}</td>
+    </tr>`).join('');
+
+  document.getElementById('rowCount').textContent = fmt(data.length) + ' registros';
+  document.getElementById('pageInfo').textContent = `Página ${state.page} de ${totalPages}`;
+  document.getElementById('prevPage').disabled = state.page<=1;
+  document.getElementById('nextPage').disabled = state.page>=totalPages;
+}
+
+let charts = {};
+function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
+
+function linearTrendLine(values){
+  const n = values.length;
+  if(n === 0) return [];
+  if(n === 1) return [values[0]];
+  let sumX=0, sumY=0, sumXY=0, sumXX=0;
+  for(let i=0;i<n;i++){ sumX+=i; sumY+=values[i]; sumXY+=i*values[i]; sumXX+=i*i; }
+  const denom = (n*sumXX - sumX*sumX);
+  const slope = denom!==0 ? (n*sumXY - sumX*sumY)/denom : 0;
+  const intercept = (sumY - slope*sumX)/n;
+  return values.map((_,i)=> intercept + slope*i);
+}
+
+function movingAverage(values, windowSize){
+  return values.map((_, i)=>{
+    const start = Math.max(0, i-windowSize+1);
+    const slice = values.slice(start, i+1);
+    return slice.reduce((a,b)=>a+b,0) / slice.length;
+  });
+}
+
+const chartDefaults = {
+  color: '#5B6472',
+  font: { family: 'Inter' }
+};
+
+function renderCharts(){
+  const data = filtered();
+
+  // Weekly line
+  const byWeek = {};
+  data.forEach(d=>{ const k=d.y*100+d.s; byWeek[k]=(byWeek[k]||0)+d.q; });
+  const weekKeys = Object.keys(byWeek).sort((a,b)=>a-b);
+  const weekLabels = weekKeys.map(k=>{ const y=Math.floor(k/100), s=k%100; return `S${s} '${String(y).slice(2)}`; });
+  const weekValues = weekKeys.map(k=>byWeek[k]);
+  const trendLine = linearTrendLine(weekValues);
+  destroyChart('weekly');
+  charts.weekly = new Chart(document.getElementById('chartWeekly'), {
+    type:'line',
+    data:{ labels: weekLabels, datasets:[
+      {
+        label:'Unidades', data: weekValues,
+        borderColor:'#0E9E8C', backgroundColor:'rgba(14,158,140,0.10)', fill:true,
+        tension:0.3, pointRadius:0, pointHoverRadius:5, pointHitRadius:12,
+        pointBackgroundColor:'#0E9E8C', pointBorderColor:'#FFFFFF', pointBorderWidth:1.5,
+        borderWidth:2, order:2
+      },
+      {
+        label:'Tendencia', data: trendLine,
+        borderColor:'#D6432F', backgroundColor:'transparent', fill:false,
+        borderDash:[6,4], borderWidth:2, pointRadius:0, tension:0, order:1
+      }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:true, position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+        tooltip:{
+          enabled:true, mode:'index', intersect:false,
+          backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF',
+          borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10,
+          titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:12, weight:'600'},
+          callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmt(ctx.parsed.y) + ' unidades' }
+        }
+      },
+      scales:{
+        x:{ ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  // Weekly moving averages (4 and 8 weeks)
+  const ma4 = movingAverage(weekValues, 4);
+  const ma8 = movingAverage(weekValues, 8);
+  destroyChart('weeklyMA');
+  charts.weeklyMA = new Chart(document.getElementById('chartWeeklyMA'), {
+    type:'line',
+    data:{ labels: weekLabels, datasets:[
+      { label:'Media móvil 4 sem.', data: ma4, borderColor:'#2F6FE0', backgroundColor:'transparent', fill:false, tension:0.25, pointRadius:0, borderWidth:2 },
+      { label:'Media móvil 8 sem.', data: ma8, borderColor:'#C9861A', backgroundColor:'transparent', fill:false, tension:0.25, pointRadius:0, borderWidth:2 }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:true, position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+        tooltip:{
+          enabled:true, mode:'index', intersect:false,
+          backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF',
+          borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10,
+          titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11},
+          callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmt(ctx.parsed.y) + ' unidades' }
+        }
+      },
+      scales:{
+        x:{ ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  // Monthly YoY grouped bar
+  const byYearMonth = {};
+  data.forEach(d=>{ byYearMonth[d.y] = byYearMonth[d.y] || Array(13).fill(0); byYearMonth[d.y][d.m]+=d.q; });
+  const yearsSorted = Object.keys(byYearMonth).sort();
+  const yColors = ['#2F6FE0','#0E9E8C','#C9861A','#6E5CD9'];
+  destroyChart('monthlyYoY');
+  charts.monthlyYoY = new Chart(document.getElementById('chartMonthlyYoY'), {
+    type:'bar',
+    data:{
+      labels: MONTH_NAMES.slice(1),
+      datasets: yearsSorted.map((y,i)=>({
+        label:y, data: byYearMonth[y].slice(1),
+        backgroundColor: yColors[i % yColors.length], borderRadius:3, maxBarThickness:14
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } } },
+      scales:{
+        x:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ display:false } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  // Retail share by year (100% stacked)
+  const retailByYear = {};
+  data.forEach(d=>{ retailByYear[d.y] = retailByYear[d.y] || {}; retailByYear[d.y][d.r] = (retailByYear[d.y][d.r]||0)+d.q; });
+  const yrsCS = Object.keys(retailByYear).sort();
+  const retailPresent = [...new Set(data.map(d=>d.r))];
+  destroyChart('clientShare');
+  charts.clientShare = new Chart(document.getElementById('chartClientShare'), {
+    type:'bar',
+    data:{
+      labels: yrsCS,
+      datasets: retailPresent.map(r=>({
+        label:r,
+        data: yrsCS.map(y=>{ const tot=Object.values(retailByYear[y]).reduce((a,b)=>a+b,0); return tot? (retailByYear[y][r]||0)/tot*100 : 0; }),
+        backgroundColor: RETAIL_COLORS[r] || '#8890A0',
+        borderRadius:2
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{ legend:{ position:'bottom', labels:{ color:'#5B6472', font:{size:10}, boxWidth:9 } } },
+      scales:{
+        x:{ stacked:true, max:100, ticks:{ color:'#8890A0', callback:(v)=>v+'%', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ stacked:true, ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ display:false } }
+      }
+    }
+  });
+
+  // Retail mix evolution, week by week (100% stacked bars)
+  const weekRetailMap = {};
+  data.forEach(d=>{
+    const wk = d.y*100 + d.s;
+    weekRetailMap[wk] = weekRetailMap[wk] || {};
+    weekRetailMap[wk][d.r] = (weekRetailMap[wk][d.r]||0) + d.q;
+  });
+  const retailPresentWeekly = [...new Set(data.map(d=>d.r))];
+  destroyChart('retailMixWeekly');
+  charts.retailMixWeekly = new Chart(document.getElementById('chartRetailMixWeekly'), {
+    type:'bar',
+    data:{
+      labels: weekLabels,
+      datasets: retailPresentWeekly.map(r=>({
+        label:r,
+        data: weekKeys.map(wk=>{
+          const rec = weekRetailMap[wk] || {};
+          const tot = Object.values(rec).reduce((a,b)=>a+b,0);
+          return tot ? (rec[r]||0)/tot*100 : 0;
+        }),
+        backgroundColor: RETAIL_COLORS[r] || '#8890A0',
+        barPercentage:1, categoryPercentage:0.98
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ position:'bottom', labels:{ color:'#5B6472', font:{size:10}, boxWidth:9 } },
+        tooltip:{
+          enabled:true, mode:'index', intersect:false,
+          backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF',
+          borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10,
+          titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11},
+          callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%' }
+        }
+      },
+      scales:{
+        x:{ stacked:true, ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ display:false } },
+        y:{ stacked:true, min:0, max:100, ticks:{ color:'#8890A0', callback:(v)=>v+'%', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+  const byModel = {};
+  data.forEach(d=>{ byModel[d.p] = (byModel[d.p]||0)+d.q; });
+  const modelKeys = Object.keys(byModel).filter(k=>byModel[k]>0);
+  destroyChart('modelMix');
+  charts.modelMix = new Chart(document.getElementById('chartModelMix'), {
+    type:'doughnut',
+    data:{ labels: modelKeys, datasets:[{ data: modelKeys.map(k=>byModel[k]), backgroundColor: modelKeys.map(k=>PRODUCT_COLORS[k]||'#8890A0'), borderColor:'#FFFFFF', borderWidth:2 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{ position:'bottom', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } } }
+    }
+  });
+
+  // Campaign impact
+  const byCampaign = {};
+  data.forEach(d=>{ if(d.cp && d.cp!=='-'){ byCampaign[d.cp]=(byCampaign[d.cp]||0)+d.q; } });
+  const campSorted = Object.entries(byCampaign).sort((a,b)=>b[1]-a[1]);
+  destroyChart('campaigns');
+  charts.campaigns = new Chart(document.getElementById('chartCampaigns'), {
+    type:'bar',
+    data:{ labels: campSorted.map(c=>c[0]), datasets:[{ data: campSorted.map(c=>c[1]), backgroundColor:'#C9861A', borderRadius:3, maxBarThickness:22 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ ticks:{ color:'#5B6472', font:{size:11} }, grid:{ display:false } }
+      }
+    }
+  });
+
+  // Promo by year grouped bar
+  const promoYear = {};
+  data.forEach(d=>{ promoYear[d.y] = promoYear[d.y] || {Si:0, No:0}; promoYear[d.y][d.pr]+=d.q; });
+  const pyKeys = Object.keys(promoYear).sort();
+  destroyChart('promoYear');
+  charts.promoYear = new Chart(document.getElementById('chartPromoByYear'), {
+    type:'bar',
+    data:{
+      labels: pyKeys,
+      datasets:[
+        { label:'Sin promo', data: pyKeys.map(y=>promoYear[y].No), backgroundColor:'#2F6FE0', borderRadius:3, maxBarThickness:60 },
+        { label:'Con promo', data: pyKeys.map(y=>promoYear[y].Si), backgroundColor:'#C9861A', borderRadius:3, maxBarThickness:60 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } } },
+      scales:{
+        x:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ display:false } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+}
+
+function weekKey(d){ return d.y*100 + d.s; }
+
+function computePeriodStats(data){
+  const weekSet = new Set(data.map(weekKey));
+  const sortedWeeks = [...weekSet].sort((a,b)=>a-b);
+  const last8 = sortedWeeks.slice(-8);
+  return { totalWeeks: weekSet.size, last8Set: new Set(last8), last8Count: last8.length || 1, lastWeekKey: sortedWeeks[sortedWeeks.length-1] };
+}
+
+function groupWeeklyStats(data, keyFn, periodStats){
+  const map = {};
+  data.forEach(d=>{
+    const k = keyFn(d);
+    if(!map[k]) map[k] = { qtyByWeek:{}, total:0, last8total:0 };
+    const wk = weekKey(d);
+    map[k].qtyByWeek[wk] = (map[k].qtyByWeek[wk]||0) + d.q;
+    map[k].total += d.q;
+    if(periodStats.last8Set.has(wk)) map[k].last8total += d.q;
+  });
+  return Object.entries(map).map(([k,v])=>{
+    const weeksArr = Object.values(v.qtyByWeek);
+    const activeWeeks = weeksArr.filter(x=>x>0).length;
+    const maxWeekly = weeksArr.length ? Math.max(...weeksArr) : 0;
+    const avgActive = activeWeeks ? v.total/activeWeeks : 0;
+    const avgAll = periodStats.totalWeeks ? v.total/periodStats.totalWeeks : 0;
+    const avgLast8 = v.last8total/periodStats.last8Count;
+    const trendPct = avgActive ? ((avgLast8-avgActive)/avgActive*100) : null;
+    const lastWeekQty = v.qtyByWeek[periodStats.lastWeekKey] || 0;
+    return { group:k, total:v.total, activeWeeks, avgActive, avgAll, avgLast8, maxWeekly, trendPct, lastWeekQty };
+  }).sort((a,b)=>b.total-a.total);
+}
+
+function trendCell(trendPct){
+  if(trendPct === null || !isFinite(trendPct)) return '<span class="trend-flat">—</span>';
+  const cls = trendPct > 5 ? 'trend-up' : (trendPct < -5 ? 'trend-down' : 'trend-flat');
+  const arrow = trendPct > 5 ? '▲' : (trendPct < -5 ? '▼' : '→');
+  return `<span class="${cls}">${arrow} ${trendPct>0?'+':''}${trendPct.toFixed(0)}%</span>`;
+}
+
+function renderAvgTable(tableId, rows, groupLabel, totalRow){
+  const table = document.getElementById(tableId);
+  table.querySelector('thead').innerHTML = `<tr>
+    <th>${groupLabel}</th>
+    <th>Semanas activas</th>
+    <th>Prom/sem (activo)</th>
+    <th>Prom/sem (período)</th>
+    <th>Prom últimas 8 sem.</th>
+    <th>Tendencia</th>
+    <th>Máx. semanal</th>
+    <th>Total unidades</th>
+  </tr>`;
+  const rowHtml = (r, isTotal) => `<tr class="${isTotal?'total-row':''}">
+    <td>${r.group}</td>
+    <td>${r.activeWeeks}</td>
+    <td>${fmt(r.avgActive)}</td>
+    <td>${fmt(r.avgAll)}</td>
+    <td>${fmt(r.avgLast8)}</td>
+    <td>${trendCell(r.trendPct)}</td>
+    <td>${fmt(r.maxWeekly)}</td>
+    <td>${fmt(r.total)}</td>
+  </tr>`;
+  table.querySelector('tbody').innerHTML = rows.map(r=>rowHtml(r,false)).join('') + (totalRow ? rowHtml(totalRow, true) : '');
+}
+
+function renderAverages(){
+  const data = filtered();
+  const periodStats = computePeriodStats(data);
+
+  const totalStats = groupWeeklyStats(data, ()=>'Total general', periodStats)[0]
+    || { group:'Total general', total:0, activeWeeks:0, avgActive:0, avgAll:0, avgLast8:0, maxWeekly:0, trendPct:null };
+
+  document.getElementById('avgSummary').innerHTML = `
+    <div class="kpi">
+      <div class="label">Semanas en el filtro</div>
+      <div class="value">${periodStats.totalWeeks}</div>
+      <div class="sub">semanas con datos</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Promedio semanal total</div>
+      <div class="value">${fmt(totalStats.avgAll)}</div>
+      <div class="sub">unidades / semana, todo el período</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Promedio últimas 8 sem.</div>
+      <div class="value">${fmt(totalStats.avgLast8)}</div>
+      <div class="sub">unidades / semana, ritmo reciente</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Tendencia reciente</div>
+      <div class="value">${trendCell(totalStats.trendPct)}</div>
+      <div class="sub">vs. promedio activo histórico</div>
+    </div>`;
+
+  const modelStats = groupWeeklyStats(data, d=>d.p, periodStats);
+  const retailStats = groupWeeklyStats(data, d=>d.r, periodStats);
+  const detailStats = groupWeeklyStats(data, d=>d.r+' · '+d.p, periodStats);
+
+  renderAvgTable('tableAvgModel', modelStats, 'Producto', totalStats);
+  renderAvgTable('tableAvgClient', retailStats, 'Retail', totalStats);
+  renderAvgTable('tableAvgDetail', detailStats, 'Retail · Producto', totalStats);
+
+  destroyChart('avgModel');
+  charts.avgModel = new Chart(document.getElementById('chartAvgModel'), {
+    type:'bar',
+    data:{ labels: modelStats.map(r=>r.group), datasets:[{ data: modelStats.map(r=>r.avgActive), backgroundColor: modelStats.map(r=>PRODUCT_COLORS[r.group]||'#8890A0'), borderRadius:4, maxBarThickness:40 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{ color:'#5B6472', font:{size:11} }, grid:{ display:false } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  destroyChart('avgClient');
+  charts.avgClient = new Chart(document.getElementById('chartAvgClient'), {
+    type:'bar',
+    data:{ labels: retailStats.map(r=>r.group), datasets:[{ data: retailStats.map(r=>r.avgActive), backgroundColor: retailStats.map(r=>RETAIL_COLORS[r.group]||'#8890A0'), borderRadius:4, maxBarThickness:40 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{ color:'#5B6472', font:{size:10}, maxRotation:20 }, grid:{ display:false } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+}
+
+/* ---------- Forecast (Holt's linear trend / double exponential smoothing) ---------- */
+
+function buildWeeklySeries(data, keyFn){
+  const map = {};
+  data.forEach(d=>{
+    const g = keyFn ? keyFn(d) : 'Total';
+    if(!map[g]) map[g] = {};
+    const wk = weekKey(d);
+    map[g][wk] = (map[g][wk]||0) + d.q;
+  });
+  return map;
+}
+
+function seriesFromMap(weekQtyMap){
+  const wks = Object.keys(weekQtyMap).map(Number).sort((a,b)=>a-b);
+  return wks.map(wk=>({ wk, y: Math.floor(wk/100), s: wk%100, q: weekQtyMap[wk] }));
+}
+
+function nextWeekKey(wk){
+  let y = Math.floor(wk/100), s = wk % 100;
+  s += 1;
+  if(s > 52){ s = 1; y += 1; }
+  return y*100 + s;
+}
+
+function prevWeekKey(wk){
+  let y = Math.floor(wk/100), s = wk % 100;
+  s -= 1;
+  if(s < 1){ s = 52; y -= 1; }
+  return y*100 + s;
+}
+
+function weekLabel(wk){
+  const y = Math.floor(wk/100), s = wk % 100;
+  return `S${s} '${String(y).slice(2)}`;
+}
+
+function holtForecast(values, horizon, alpha, beta){
+  alpha = alpha || 0.4; beta = beta || 0.25;
+  if(values.length === 0) return { forecast: Array(horizon).fill(0), residualStd: 0 };
+  if(values.length === 1) return { forecast: Array(horizon).fill(values[0]), residualStd: 0 };
+
+  let level = values[0];
+  let trend = values[1] - values[0];
+  const errors = [];
+  for(let t=1; t<values.length; t++){
+    const prevLevel = level;
+    const oneStep = prevLevel + trend;
+    errors.push(values[t] - oneStep);
+    level = alpha*values[t] + (1-alpha)*(prevLevel+trend);
+    trend = beta*(level-prevLevel) + (1-beta)*trend;
+  }
+  const forecast = [];
+  for(let h=1; h<=horizon; h++){ forecast.push(Math.max(0, level + h*trend)); }
+  const mean = errors.reduce((a,b)=>a+b,0) / (errors.length||1);
+  const variance = errors.reduce((a,b)=>a+(b-mean)*(b-mean),0) / (errors.length||1);
+  return { forecast, residualStd: Math.sqrt(variance) };
+}
+
+function renderForecast(){
+  const data = filtered();
+  const horizon = state.horizon;
+
+  const totalMap = buildWeeklySeries(data);
+  const totalSeries = seriesFromMap(totalMap['Total'] || {});
+  const totalValues = totalSeries.map(p=>p.q);
+
+  if(totalSeries.length === 0){
+    document.getElementById('forecastSummary').innerHTML =
+      '<div class="kpi" style="grid-column:1 / -1;"><div class="label">Sin datos suficientes</div><div class="sub">Ajustá los filtros para tener al menos una semana de historia.</div></div>';
+    destroyChart('forecastTotal'); destroyChart('forecastModel'); destroyChart('forecastRetail');
+    ['tableForecastModel','tableForecastRetail'].forEach(id=>{
+      document.getElementById(id).querySelector('thead').innerHTML = '';
+      document.getElementById(id).querySelector('tbody').innerHTML = '';
+    });
+    return;
+  }
+
+  const holtTotal = holtForecast(totalValues, horizon);
+  let lastWk = totalSeries[totalSeries.length-1].wk;
+  const forecastWeekKeys = [];
+  let wk = lastWk;
+  for(let h=0; h<horizon; h++){ wk = nextWeekKey(wk); forecastWeekKeys.push(wk); }
+
+  const nextWeekForecast = holtTotal.forecast[0] || 0;
+  const horizonTotal = holtTotal.forecast.reduce((a,b)=>a+b,0);
+  const recentAvg8 = totalValues.slice(-8).reduce((a,b)=>a+b,0) / Math.min(8, totalValues.length);
+  const trendPct = recentAvg8 ? ((nextWeekForecast-recentAvg8)/recentAvg8*100) : null;
+
+  document.getElementById('forecastSummary').innerHTML = `
+    <div class="kpi">
+      <div class="label">Próxima semana proyectada</div>
+      <div class="value">${fmt(nextWeekForecast)}</div>
+      <div class="sub">unidades estimadas</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Total próximas ${horizon} semanas</div>
+      <div class="value">${fmt(horizonTotal)}</div>
+      <div class="sub">suma proyectada del horizonte</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Promedio últimas 8 sem. (real)</div>
+      <div class="value">${fmt(recentAvg8)}</div>
+      <div class="sub">punto de partida del modelo</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Tendencia proyectada</div>
+      <div class="value">${trendCell(trendPct)}</div>
+      <div class="sub">próxima semana vs. últimas 8 reales</div>
+    </div>`;
+
+  const histLabels = totalSeries.map(p=>weekLabel(p.wk));
+  const foreLabels = forecastWeekKeys.map(w=>weekLabel(w));
+  const allLabels = histLabels.concat(foreLabels);
+  const n = totalValues.length;
+
+  const histData = totalValues.concat(Array(horizon).fill(null));
+  const foreData = Array(n-1).fill(null).concat([totalValues[n-1]]).concat(holtTotal.forecast);
+  const upperData = Array(n-1).fill(null).concat([totalValues[n-1]])
+    .concat(holtTotal.forecast.map((v,i)=> v + 1.28*holtTotal.residualStd*Math.sqrt(i+1)));
+  const lowerData = Array(n-1).fill(null).concat([totalValues[n-1]])
+    .concat(holtTotal.forecast.map((v,i)=> Math.max(0, v - 1.28*holtTotal.residualStd*Math.sqrt(i+1))));
+
+  destroyChart('forecastTotal');
+  charts.forecastTotal = new Chart(document.getElementById('chartForecastTotal'), {
+    type:'line',
+    data:{
+      labels: allLabels,
+      datasets:[
+        { label:'Banda superior', data: upperData, borderColor:'transparent', backgroundColor:'rgba(47,111,224,0.10)', fill:'+1', pointRadius:0, tension:0.25 },
+        { label:'Banda inferior', data: lowerData, borderColor:'transparent', backgroundColor:'rgba(47,111,224,0.10)', fill:false, pointRadius:0, tension:0.25 },
+        { label:'Histórico', data: histData, borderColor:'#0E9E8C', backgroundColor:'rgba(14,158,140,0.08)', fill:true, tension:0.25, pointRadius:0, borderWidth:2 },
+        { label:'Proyección', data: foreData, borderColor:'#2F6FE0', borderDash:[6,4], fill:false, tension:0.25, pointRadius:0, borderWidth:2 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10, filter:(item)=> item.text==='Histórico' || item.text==='Proyección' } } },
+      scales:{
+        x:{ ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  function groupForecast(keyFn){
+    const map = buildWeeklySeries(data, keyFn);
+    return Object.keys(map).map(g=>{
+      const series = seriesFromMap(map[g]);
+      const values = series.map(p=>p.q);
+      const holt = holtForecast(values, horizon);
+      const recent8 = values.slice(-8).reduce((a,b)=>a+b,0) / Math.min(8, values.length || 1);
+      const nextWk = holt.forecast[0] || 0;
+      const horizonSum = holt.forecast.reduce((a,b)=>a+b,0);
+      const gTrendPct = recent8 ? ((nextWk-recent8)/recent8*100) : null;
+      return { group:g, recent8, nextWk, horizonSum, trendPct: gTrendPct };
+    }).sort((a,b)=>b.horizonSum-a.horizonSum);
+  }
+
+  const modelForecast = groupForecast(d=>d.p);
+  const retailForecast = groupForecast(d=>d.r);
+
+  function renderForecastTable(tableId, rows){
+    const table = document.getElementById(tableId);
+    table.querySelector('thead').innerHTML = `<tr>
+      <th>Grupo</th>
+      <th>Prom/sem reciente (8 sem)</th>
+      <th>Proyección próx. semana</th>
+      <th>Tendencia</th>
+      <th>Total proyectado (${horizon} sem)</th>
+    </tr>`;
+    table.querySelector('tbody').innerHTML = rows.map(r=>`
+      <tr>
+        <td>${r.group}</td>
+        <td>${fmt(r.recent8)}</td>
+        <td>${fmt(r.nextWk)}</td>
+        <td>${trendCell(r.trendPct)}</td>
+        <td>${fmt(r.horizonSum)}</td>
+      </tr>`).join('');
+  }
+
+  renderForecastTable('tableForecastModel', modelForecast);
+  renderForecastTable('tableForecastRetail', retailForecast);
+
+  destroyChart('forecastModel');
+  charts.forecastModel = new Chart(document.getElementById('chartForecastModel'), {
+    type:'bar',
+    data:{ labels: modelForecast.map(r=>r.group), datasets:[{ data: modelForecast.map(r=>r.nextWk), backgroundColor: modelForecast.map(r=>PRODUCT_COLORS[r.group]||'#8890A0'), borderRadius:4, maxBarThickness:40 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{ color:'#5B6472', font:{size:11} }, grid:{ display:false } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  destroyChart('forecastRetail');
+  charts.forecastRetail = new Chart(document.getElementById('chartForecastRetail'), {
+    type:'bar',
+    data:{ labels: retailForecast.map(r=>r.group), datasets:[{ data: retailForecast.map(r=>r.nextWk), backgroundColor: retailForecast.map(r=>RETAIL_COLORS[r.group]||'#8890A0'), borderRadius:4, maxBarThickness:40 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{ color:'#5B6472', font:{size:10}, maxRotation:20 }, grid:{ display:false } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+}
+
+/* ---------- Elasticidad de promociones ---------- */
+
+function linRegXY(points){
+  // points: [{x,y}, ...]
+  const n = points.length;
+  if(n < 2) return null;
+  let sumX=0,sumY=0,sumXY=0,sumXX=0;
+  points.forEach(p=>{ sumX+=p.x; sumY+=p.y; sumXY+=p.x*p.y; sumXX+=p.x*p.x; });
+  const denom = (n*sumXX - sumX*sumX);
+  if(denom === 0) return null;
+  const slope = (n*sumXY - sumX*sumY)/denom;
+  const intercept = (sumY - slope*sumX)/n;
+  return { slope, intercept };
+}
+
+function buildCampaignInstances(data){
+  const rows = data.filter(d=>d.pr==='Si');
+  const byName = {};
+  rows.forEach(d=>{
+    const nm = (d.cp && d.cp!=='-') ? d.cp : 'Promoción sin nombre';
+    byName[nm] = byName[nm] || {};
+    const wk = d.y*100 + d.s;
+    byName[nm][wk] = byName[nm][wk] || { qty:0, discounts:[] };
+    byName[nm][wk].qty += d.q;
+    if(d.disc !== null && d.disc !== undefined) byName[nm][wk].discounts.push(d.disc);
+  });
+  const instances = [];
+  Object.entries(byName).forEach(([nm, weekMap])=>{
+    const wks = Object.keys(weekMap).map(Number).sort((a,b)=>a-b);
+    if(wks.length === 0) return;
+    let run = [wks[0]];
+    for(let i=1;i<wks.length;i++){
+      if(nextWeekKey(run[run.length-1]) === wks[i]) run.push(wks[i]);
+      else { instances.push({name:nm, weeks:run.slice(), weekMap}); run=[wks[i]]; }
+    }
+    instances.push({name:nm, weeks:run.slice(), weekMap});
+  });
+  return instances.sort((a,b)=> a.weeks[0]-b.weeks[0]);
+}
+
+function renderElasticity(){
+  const data = filtered();
+  const totalMap = buildWeeklySeries(data)['Total'] || {};
+  const instances = buildCampaignInstances(data);
+
+  const rows = instances.map(inst=>{
+    const allDiscounts = inst.weeks.flatMap(wk=>(inst.weekMap[wk] && inst.weekMap[wk].discounts) || []);
+    const discount = allDiscounts.length ? allDiscounts.reduce((a,b)=>a+b,0)/allDiscounts.length : null;
+    const avgDuring = inst.weeks.reduce((a,wk)=>a+(totalMap[wk]||0),0) / inst.weeks.length;
+    const baselineWeeks = [];
+    let cursor = inst.weeks[0];
+    for(let i=0;i<4;i++){ cursor = prevWeekKey(cursor); if(totalMap[cursor]!==undefined) baselineWeeks.push(cursor); }
+    const baselineAvg = baselineWeeks.length ? baselineWeeks.reduce((a,wk)=>a+totalMap[wk],0)/baselineWeeks.length : null;
+    const growthPct = (baselineAvg && baselineAvg>0) ? ((avgDuring-baselineAvg)/baselineAvg*100) : null;
+    const label = `${inst.name} (${weekLabel(inst.weeks[0])}${inst.weeks.length>1 ? '–'+weekLabel(inst.weeks[inst.weeks.length-1]) : ''})`;
+    return { label, name:inst.name, discount, weeks:inst.weeks.length, avgDuring, baselineAvg, growthPct };
+  });
+
+  const known = rows.filter(r=>r.discount!==null && r.growthPct!==null);
+  const reg = linRegXY(known.map(r=>({x:r.discount, y:r.growthPct})));
+
+  const avgGrowthKnown = known.length ? known.reduce((a,r)=>a+r.growthPct,0)/known.length : null;
+  document.getElementById('elasticitySummary').innerHTML = `
+    <div class="kpi">
+      <div class="label">Campañas analizadas</div>
+      <div class="value">${rows.length}</div>
+      <div class="sub">${known.length} con % de descuento conocido</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Crecimiento prom. (con % conocido)</div>
+      <div class="value">${avgGrowthKnown!==null ? (avgGrowthKnown>0?'+':'')+avgGrowthKnown.toFixed(1)+'%' : '—'}</div>
+      <div class="sub">vs. 4 semanas previas</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Pendiente de la regresión</div>
+      <div class="value">${reg ? (reg.slope>0?'+':'')+reg.slope.toFixed(2) : '—'}</div>
+      <div class="sub">pts de crecimiento % por cada 1% de descuento</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Mejor campaña (crecimiento)</div>
+      <div class="value">${rows.length ? rows.slice().sort((a,b)=>(b.growthPct||-Infinity)-(a.growthPct||-Infinity))[0].name : '—'}</div>
+      <div class="sub">${rows.length ? (rows.slice().sort((a,b)=>(b.growthPct||-Infinity)-(a.growthPct||-Infinity))[0].growthPct||0).toFixed(1)+'% vs. previas' : ''}</div>
+    </div>`;
+
+  destroyChart('elasticity');
+  const scatterPoints = known.map(r=>({ x:r.discount, y:r.growthPct, label:r.name }));
+  const regLine = reg ? [0,50].map(x=>({x, y: reg.intercept + reg.slope*x})) : [];
+  charts.elasticity = new Chart(document.getElementById('chartElasticity'), {
+    type:'scatter',
+    data:{
+      datasets:[
+        {
+          label:'Campañas', data: scatterPoints,
+          backgroundColor:'#0E9E8C', borderColor:'#0E9E8C',
+          pointRadius:6, pointHoverRadius:8
+        },
+        {
+          label:'Regresión', data: regLine, type:'line',
+          borderColor:'#D6432F', borderDash:[6,4], borderWidth:2,
+          pointRadius:0, fill:false, tension:0
+        }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+        tooltip:{
+          backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF',
+          borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10,
+          titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11},
+          callbacks:{
+            label:(ctx)=>{
+              if(ctx.dataset.label==='Regresión') return ' regresión: ' + ctx.parsed.y.toFixed(1) + '%';
+              const p = ctx.raw;
+              return ' ' + p.label + ': ' + p.x + '% desc. → ' + (p.y>0?'+':'') + p.y.toFixed(1) + '%';
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ title:{ display:true, text:'Descuento (%)', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', callback:(v)=>v+'%', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ title:{ display:true, text:'Crecimiento vs. 4 sem. previas (%)', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', callback:(v)=>v+'%', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  const table = document.getElementById('tableElasticity');
+  table.querySelector('thead').innerHTML = `<tr>
+    <th>Campaña</th>
+    <th>Descuento</th>
+    <th>Semanas</th>
+    <th>Prom/sem mercado (previas)</th>
+    <th>Prom/sem mercado (durante)</th>
+    <th>Crecimiento</th>
+  </tr>`;
+  table.querySelector('tbody').innerHTML = rows.sort((a,b)=>a.weeks[0]-b.weeks[0]).map(r=>`
+    <tr>
+      <td>${r.label}</td>
+      <td>${r.discount!==null ? r.discount+'%' : 'N/D'}</td>
+      <td>${r.weeks}</td>
+      <td>${r.baselineAvg!==null ? fmt(r.baselineAvg) : '—'}</td>
+      <td>${fmt(r.avgDuring)}</td>
+      <td>${r.growthPct!==null ? trendCell(r.growthPct) : '—'}</td>
+    </tr>`).join('');
+}
+
+/* ---------- Análisis de lanzamientos ---------- */
+
+function renderLaunch(){
+  const data = filtered();
+  const byProduct = {};
+  data.forEach(d=>{
+    byProduct[d.p] = byProduct[d.p] || {};
+    const wk = d.y*100 + d.s;
+    byProduct[d.p][wk] = (byProduct[d.p][wk]||0) + d.q;
+  });
+
+  const productRows = Object.keys(byProduct).map(p=>{
+    const weekMap = byProduct[p];
+    const wks = Object.keys(weekMap).map(Number).sort((a,b)=>a-b);
+    const launchWk = wks.find(wk=>weekMap[wk]>0);
+    if(launchWk === undefined) return null;
+    // build weeks-since-launch series up to the last available week for this product
+    const lastWk = wks[wks.length-1];
+    const series = [];
+    let cursor = launchWk;
+    let idx = 0;
+    while(true){
+      series.push(weekMap[cursor] || 0);
+      if(cursor === lastWk || idx > 200) break; // safety cap
+      cursor = nextWeekKey(cursor);
+      idx++;
+    }
+    const peak = Math.max(...series);
+    const peakWeekOffset = series.indexOf(peak);
+    const total = series.reduce((a,b)=>a+b,0);
+    return {
+      product: p, launchWk, series,
+      w0: series[0]||0, w4: series[4]!==undefined?series[4]:null, w8: series[8]!==undefined?series[8]:null,
+      peak, peakWeekOffset, total
+    };
+  }).filter(Boolean).sort((a,b)=>a.launchWk-b.launchWk);
+
+  const maxLen = Math.max(0, ...productRows.map(r=>r.series.length));
+  const xLabels = Array.from({length:maxLen}, (_,i)=>'S+'+i);
+
+  destroyChart('launchCurve');
+  charts.launchCurve = new Chart(document.getElementById('chartLaunchCurve'), {
+    type:'line',
+    data:{
+      labels: xLabels,
+      datasets: productRows.map(r=>({
+        label:r.product,
+        data: r.series,
+        borderColor: PRODUCT_COLORS[r.product] || '#8890A0',
+        backgroundColor:'transparent',
+        fill:false, tension:0.25, pointRadius:0, pointHoverRadius:4, pointHitRadius:10,
+        borderWidth:2
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+        tooltip:{
+          enabled:true, mode:'index', intersect:false,
+          backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF',
+          borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10,
+          titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11},
+          callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmt(ctx.parsed.y) + ' unidades' }
+        }
+      },
+      scales:{
+        x:{ title:{ display:true, text:'Semanas desde el lanzamiento', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  const table = document.getElementById('tableLaunch');
+  table.querySelector('thead').innerHTML = `<tr>
+    <th>Producto</th>
+    <th>Semana de lanzamiento</th>
+    <th>Uds. semana 0</th>
+    <th>Uds. semana 4</th>
+    <th>Uds. semana 8</th>
+    <th>Pico semanal</th>
+    <th>Semana del pico</th>
+    <th>Total acumulado</th>
+  </tr>`;
+  table.querySelector('tbody').innerHTML = productRows.map(r=>`
+    <tr>
+      <td>${r.product}</td>
+      <td>${weekLabel(r.launchWk)}</td>
+      <td>${fmt(r.w0)}</td>
+      <td>${r.w4!==null ? fmt(r.w4) : '—'}</td>
+      <td>${r.w8!==null ? fmt(r.w8) : '—'}</td>
+      <td>${fmt(r.peak)}</td>
+      <td>S+${r.peakWeekOffset}</td>
+      <td>${fmt(r.total)}</td>
+    </tr>`).join('');
+}
+
+function refreshAll(){
+  renderFilters();
+  renderKPIs();
+  renderTable();
+  renderCharts();
+  renderAverages();
+  renderForecast();
+  renderElasticity();
+  renderLaunch();
+}
+
+// Carga de datos desde data.json (separado del HTML para poder actualizarlo cada semana
+// sin tocar el archivo principal).
+async function init(){
+  try{
+    const resp = await fetch('data.json', { cache: 'no-store' });
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    RAW = await resp.json();
+  }catch(err){
+    console.error('No se pudo cargar data.json', err);
+    document.getElementById('kpiRow').innerHTML = `
+      <div class="kpi" style="grid-column:1 / -1; border-color:var(--signal-4);">
+        <div class="label" style="color:var(--signal-4);">No se pudo cargar data.json</div>
+        <div class="sub" style="margin-top:8px; line-height:1.5;">
+          Este dashboard necesita el archivo <b style="color:var(--text)">data.json</b> en la misma carpeta que este HTML.
+          Si lo abriste con doble clic desde tu computadora, el navegador bloquea esa carga por seguridad — subí ambos
+          archivos (index.html y data.json) a GitHub Pages, Netlify u otro hosting, o abrí esta carpeta con un servidor local.
+        </div>
+      </div>`;
+    return;
+  }
+
+  allYears = [...new Set(RAW.map(d=>d.y))].sort();
+  allMonths = [...new Set(RAW.map(d=>d.m))].sort((a,b)=>a-b);
+  allRetail = [...new Set(RAW.map(d=>d.r))].sort();
+  allProducts = [...new Set(RAW.map(d=>d.p))].sort();
+  allWeeksNum = [...new Set(RAW.map(d=>d.s))].sort((a,b)=>a-b);
+  allYears.forEach(y=>state.years.add(y));
+  allMonths.forEach(m=>state.months.add(m));
+  allRetail.forEach(r=>state.retail.add(r));
+  allProducts.forEach(p=>state.products.add(p));
+  state.weekMin = allWeeksNum[0];
+  state.weekMax = allWeeksNum[allWeeksNum.length-1];
+
+  const dates = RAW.map(d=>d.f).sort();
+  document.getElementById('periodTag').textContent = `${dates[0]} → ${dates[dates.length-1]}`;
+  document.getElementById('footRange').textContent = `${RAW.length.toLocaleString('es-AR')} registros · datos al ${dates[dates.length-1]}`;
+
+  refreshAll();
+}
+
+init();
+</script>
+</body>
+</html>
