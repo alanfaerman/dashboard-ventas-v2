@@ -294,16 +294,98 @@
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="datos"><span class="n">i.</span>Datos</button>
-    <button class="tab-btn" data-tab="graficos"><span class="n">ii.</span>Gráficos</button>
-    <button class="tab-btn" data-tab="promedios"><span class="n">iii.</span>Promedios semanales</button>
-    <button class="tab-btn" data-tab="forecast"><span class="n">iv.</span>Forecast</button>
-    <button class="tab-btn" data-tab="promolaunch"><span class="n">v.</span>Promos &amp; Lanzamientos</button>
-    <button class="tab-btn" data-tab="insights"><span class="n">vi.</span>Insights</button>
+    <button class="tab-btn active" data-tab="ultimasemana"><span class="n">i.</span>Última semana</button>
+    <button class="tab-btn" data-tab="acumulado"><span class="n">ii.</span>Acumulado</button>
+    <button class="tab-btn" data-tab="datos"><span class="n">iii.</span>Datos</button>
+    <button class="tab-btn" data-tab="graficos"><span class="n">iv.</span>Gráficos</button>
+    <button class="tab-btn" data-tab="promedios"><span class="n">v.</span>Promedios semanales</button>
+    <button class="tab-btn" data-tab="forecast"><span class="n">vi.</span>Forecast</button>
+    <button class="tab-btn" data-tab="promolaunch"><span class="n">vii.</span>Promos &amp; Lanzamientos</button>
+    <button class="tab-btn" data-tab="insights"><span class="n">viii.</span>Insights</button>
+    <button class="tab-btn" data-tab="summaryen"><span class="n">ix.</span>English Summary</button>
   </div>
 
   <!-- TAB: DATOS -->
-  <div class="tab-panel active" id="tab-datos">
+  <!-- TAB: ÚLTIMA SEMANA -->
+  <div class="tab-panel active" id="tab-ultimasemana">
+    <div class="avg-summary" id="lastWeekSummary"></div>
+
+    <div class="notes" id="lastWeekAlerts" style="margin-bottom:18px;"></div>
+
+    <div class="chart-grid" style="margin-bottom:18px;">
+      <div class="chart-card">
+        <h3>Unidades por retail — esta semana vs. anterior</h3>
+        <p class="desc">Comparación semana a semana, por retail.</p>
+        <div class="chart-holder"><canvas id="chartLastWeekRetail"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Unidades por producto — esta semana vs. anterior</h3>
+        <p class="desc">Comparación semana a semana, por producto.</p>
+        <div class="chart-holder"><canvas id="chartLastWeekProduct"></canvas></div>
+      </div>
+    </div>
+
+    <h3 class="section-title" style="margin-top:0;">Share por retail</h3>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableLastWeekRetail" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <h3 class="section-title">Share por producto</h3>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableLastWeekProduct" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <div class="notes" style="margin-top:16px;">
+      <b>Cómo leer esta sección:</b> "Semana actual" es la última semana con datos dentro del filtro activo; se compara contra la semana inmediatamente anterior y, cuando hay historia suficiente, contra la misma semana del año anterior. El "Var. puntos de share" indica cuánto ganó o perdió cada retail/producto en participación (no en unidades) de una semana a la otra — útil para ver cambios de mix incluso cuando el total se mantiene estable.
+    </div>
+  </div>
+
+  <!-- TAB: ACUMULADO (mes/año) -->
+  <div class="tab-panel" id="tab-acumulado">
+    <div class="filters" style="margin-bottom:20px;">
+      <div class="filter-group">
+        <span class="fl-label">Vista</span>
+        <div class="chips" id="fAccPeriodType"></div>
+      </div>
+      <div class="filter-group">
+        <span class="fl-label">Período</span>
+        <select id="accPeriodSelect" class="search-box" style="width:180px;"></select>
+      </div>
+    </div>
+
+    <div class="avg-summary" id="accSummary"></div>
+
+    <div class="notes" id="accAlerts" style="margin-bottom:18px;"></div>
+
+    <div class="chart-grid" style="margin-bottom:18px;">
+      <div class="chart-card">
+        <h3>Unidades por retail — período vs. anterior</h3>
+        <p class="desc">Comparación del período seleccionado contra el inmediatamente anterior, por retail.</p>
+        <div class="chart-holder"><canvas id="chartAccRetail"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Unidades por producto — período vs. anterior</h3>
+        <p class="desc">Comparación del período seleccionado contra el inmediatamente anterior, por producto.</p>
+        <div class="chart-holder"><canvas id="chartAccProduct"></canvas></div>
+      </div>
+    </div>
+
+    <h3 class="section-title" style="margin-top:0;">Share por retail</h3>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableAccRetail" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <h3 class="section-title">Share por producto</h3>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableAccProduct" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <div class="notes" style="margin-top:16px;">
+      <b>Cómo leer esta sección:</b> elegí si querés ver el acumulado por <b>mes</b> o por <b>año</b>, y qué período específico mirar. Se compara contra el período inmediatamente anterior (el mes previo, o el año previo) y, en vista mensual, también contra el mismo mes del año anterior. El "Var. puntos de share" mide el cambio de participación, no de volumen — útil para separar "vendimos más" de "ganamos terreno".
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-datos">
     <div class="table-toolbar">
       <input class="search-box" id="searchBox" placeholder="Buscar cliente, modelo, campaña...">
       <span class="row-count" id="rowCount"></span>
@@ -556,6 +638,73 @@
     </div>
   </div>
 
+  <!-- TAB: ENGLISH SUMMARY -->
+  <div class="tab-panel" id="tab-summaryen">
+    <div class="notes" style="margin-bottom:18px;">
+      <b>About this view:</b> a consolidated English-language summary of the dashboard's core analyses — total kits and product ranking, weekly averages by product and retailer, weekly sales evolution, retailer ranking with share, product launch adoption curves, and discount-vs-growth for promotional campaigns. It respects the same Year / Month / Retail / Product / Promo / Week filters as the rest of the dashboard.
+    </div>
+
+    <h3 class="section-title" style="margin-top:0;">Total kits &amp; product ranking</h3>
+    <div class="avg-summary" id="enTotalKits"></div>
+    <div class="table-scroll avg-table-scroll" style="margin-bottom:22px;">
+      <table id="tableEnProductRank" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <h3 class="section-title">Weekly average by product &amp; retailer</h3>
+    <div class="chart-grid" style="margin-bottom:18px;">
+      <div class="chart-card">
+        <h3>Weekly average by product</h3>
+        <p class="desc">Units/week, counting only weeks where the product had active sales.</p>
+        <div class="chart-holder"><canvas id="chartEnAvgProduct"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Weekly average by retailer</h3>
+        <p class="desc">Units/week, counting only weeks where the retailer had active sales.</p>
+        <div class="chart-holder"><canvas id="chartEnAvgRetail"></canvas></div>
+      </div>
+    </div>
+    <div class="table-scroll avg-table-scroll" style="margin-bottom:12px;">
+      <table id="tableEnAvgProduct" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+    <div class="table-scroll avg-table-scroll" style="margin-bottom:22px;">
+      <table id="tableEnAvgRetail" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <h3 class="section-title">Weekly sales evolution</h3>
+    <div class="chart-card full" style="margin-bottom:22px;">
+      <h3>Total units per week</h3>
+      <p class="desc">Weekly dispatched volume across the filtered period, with a linear trend line.</p>
+      <div class="chart-holder tall"><canvas id="chartEnWeekly"></canvas></div>
+    </div>
+
+    <h3 class="section-title">Retailer ranking — share &amp; quantities</h3>
+    <div class="table-scroll avg-table-scroll" style="margin-bottom:22px;">
+      <table id="tableEnRetailRank" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <h3 class="section-title">Adoption curve at launch</h3>
+    <p class="desc" style="margin:-4px 0 12px;">For each product, "launch week" is the first week (within the active filter) with units sold greater than zero. Curves are aligned by weeks since launch, not by calendar date, so adoption speed can be compared across products.</p>
+    <div class="chart-card full" style="margin-bottom:22px;">
+      <h3>Units sold by week since launch</h3>
+      <p class="desc">Week 0 = first week with sales for each product.</p>
+      <div class="chart-holder tall"><canvas id="chartEnLaunch"></canvas></div>
+    </div>
+
+    <h3 class="section-title">Discount vs. sales growth (promotions)</h3>
+    <p class="desc" style="margin:-4px 0 12px;">Each point is a promotional campaign with a known discount. "Growth" compares the filtered market's weekly average during the promo weeks against the average of the 4 weeks immediately before it — not just that campaign's own units — to capture the promo's real pull on total sales. The dashed line is a simple linear regression between discount % and growth %.</p>
+    <div class="chart-card full" style="margin-bottom:18px;">
+      <h3>Discount % vs. growth %</h3>
+      <div class="chart-holder tall"><canvas id="chartEnElasticity"></canvas></div>
+    </div>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableEnElasticity" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <div class="notes" style="margin-top:16px;">
+      <b>Notes:</b> figures are dispatched units — the source file has no price/revenue dimension. All numbers on this page respect the dashboard's active filters, so narrowing by Retail, Product, Year or Promo recomputes every section here.
+    </div>
+  </div>
+
   <footer>
     <span>Fuente: Base_ventas_030726.xlsx</span>
     <span id="footRange"></span>
@@ -576,12 +725,15 @@ const PRODUCT_COLORS = { 'Mini Kit': '#0E9E8C', 'Mini X': '#6E5CD9', 'Standard K
 const state = {
   years: new Set(), months: new Set(), retail: new Set(), products: new Set(), promo: 'all',
   weekMin: 1, weekMax: 52, horizon: 8,
+  accPeriodType: 'month', accPeriodValue: null,
   search: '', sortKey: 'f', sortDir: 1, page: 1, pageSize: 50
 };
 
 let allYears = [], allMonths = [], allRetail = [], allProducts = [], allWeeksNum = [];
 
 function fmt(n){ return Math.round(n).toLocaleString('es-AR'); }
+function fmtEN(n){ return Math.round(n).toLocaleString('en-US'); }
+function weekLabelEN(wk){ const y = Math.floor(wk/100), s = wk % 100; return `W${s} '${String(y).slice(2)}`; }
 
 function filtered(){
   return RAW.filter(d =>
@@ -1612,6 +1764,610 @@ function renderLaunch(){
     </tr>`).join('');
 }
 
+/* ---------- Acumulado: por mes o por año, con comparación de período ---------- */
+
+function getPeriodKey(d, periodType){
+  return periodType === 'year' ? d.y : d.y*100 + d.m;
+}
+function getPrevPeriodKey(key, periodType){
+  if(periodType === 'year') return key - 1;
+  let y = Math.floor(key/100), m = key % 100;
+  m -= 1;
+  if(m < 1){ m = 12; y -= 1; }
+  return y*100 + m;
+}
+function getSameLastYearKey(key, periodType){
+  if(periodType === 'year') return null;
+  let y = Math.floor(key/100), m = key % 100;
+  return (y-1)*100 + m;
+}
+function getPeriodLabel(key, periodType){
+  if(periodType === 'year') return String(key);
+  const y = Math.floor(key/100), m = key % 100;
+  return MONTH_NAMES[m] + " '" + String(y).slice(2);
+}
+
+function renderAccFilters(availableKeys){
+  const typeEl = document.getElementById('fAccPeriodType');
+  typeEl.innerHTML = '';
+  [['month','Mensual'],['year','Anual']].forEach(([val,label])=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (state.accPeriodType===val ? ' active' : '');
+    chip.textContent = label;
+    chip.onclick = () => { state.accPeriodType = val; state.accPeriodValue = null; refreshAll(); };
+    typeEl.appendChild(chip);
+  });
+
+  const select = document.getElementById('accPeriodSelect');
+  const prevValue = select.value;
+  select.innerHTML = availableKeys.map(k=>`<option value="${k}">${getPeriodLabel(k, state.accPeriodType)}</option>`).join('');
+  if(state.accPeriodValue !== null && availableKeys.includes(state.accPeriodValue)){
+    select.value = String(state.accPeriodValue);
+  } else if(availableKeys.length){
+    select.value = String(availableKeys[availableKeys.length-1]);
+    state.accPeriodValue = availableKeys[availableKeys.length-1];
+  }
+  select.onchange = () => { state.accPeriodValue = Number(select.value); refreshAll(); };
+}
+
+function renderAccumulated(){
+  const data = filtered();
+  const summaryEl = document.getElementById('accSummary');
+  const alertsEl = document.getElementById('accAlerts');
+  const periodType = state.accPeriodType;
+
+  if(data.length === 0){
+    summaryEl.innerHTML = '<div class="kpi" style="grid-column:1 / -1;"><div class="label">Sin datos</div><div class="sub">Ajustá los filtros para ver el acumulado.</div></div>';
+    alertsEl.innerHTML = '';
+    destroyChart('accRetail'); destroyChart('accProduct');
+    ['tableAccRetail','tableAccProduct'].forEach(id=>{
+      document.getElementById(id).querySelector('thead').innerHTML = '';
+      document.getElementById(id).querySelector('tbody').innerHTML = '';
+    });
+    renderAccFilters([]);
+    return;
+  }
+
+  const keysSet = new Set(data.map(d=>getPeriodKey(d, periodType)));
+  const keys = [...keysSet].sort((a,b)=>a-b);
+  renderAccFilters(keys);
+
+  const curKey = state.accPeriodValue;
+  const prevKey = getPrevPeriodKey(curKey, periodType);
+  const yoyKey = getSameLastYearKey(curKey, periodType);
+
+  const curRows = data.filter(d=>getPeriodKey(d, periodType)===curKey);
+  let prevRows = data.filter(d=>getPeriodKey(d, periodType)===prevKey);
+  const yoyRows = yoyKey !== null ? data.filter(d=>getPeriodKey(d, periodType)===yoyKey) : [];
+
+  // Year mode: if the selected year is partial (fewer months than the max seen anywhere),
+  // restrict the previous year to the SAME set of months for a fair like-for-like comparison.
+  let likeForLikeNote = '';
+  if(periodType === 'year'){
+    const monthsInCur = [...new Set(curRows.map(d=>d.m))].sort((a,b)=>a-b);
+    const allMonthsInPrevFull = [...new Set(prevRows.map(d=>d.m))].sort((a,b)=>a-b);
+    const isCurFullYear = monthsInCur.length >= 12;
+    if(!isCurFullYear && allMonthsInPrevFull.length > monthsInCur.length){
+      prevRows = prevRows.filter(d=>monthsInCur.includes(d.m));
+      likeForLikeNote = ` (comparado ${MONTH_NAMES[monthsInCur[0]]}–${MONTH_NAMES[monthsInCur[monthsInCur.length-1]]} vs. mismos meses)`;
+    }
+  }
+
+  const curQty = curRows.reduce((a,d)=>a+d.q,0);
+  const prevQty = prevRows.reduce((a,d)=>a+d.q,0);
+  const yoyQty = yoyRows.reduce((a,d)=>a+d.q,0);
+  const havePrev = prevRows.length > 0;
+  const haveYoy = yoyRows.length > 0;
+  const wowPct = (havePrev && prevQty>0) ? ((curQty-prevQty)/prevQty*100) : null;
+  const yoyPct = (haveYoy && yoyQty>0) ? ((curQty-yoyQty)/yoyQty*100) : null;
+
+  const promoQtyCur = curRows.filter(d=>d.pr==='Si').reduce((a,d)=>a+d.q,0);
+  const promoSharePctCur = curQty ? (promoQtyCur/curQty*100) : 0;
+  const activeCampaigns = [...new Set(curRows.filter(d=>d.pr==='Si' && d.cp!=='-').map(d=>d.cp))];
+  const weeksInPeriod = new Set(curRows.map(weekKey)).size;
+  const weeksInPrevPeriod = new Set(prevRows.map(weekKey)).size;
+  const avgWeekly = weeksInPeriod ? curQty/weeksInPeriod : 0;
+  const isPartial = periodType==='month' ? (weeksInPeriod < 4 && weeksInPeriod < weeksInPrevPeriod)
+                                          : false;
+
+  summaryEl.innerHTML = `
+    <div class="kpi">
+      <div class="label">Período seleccionado</div>
+      <div class="value">${getPeriodLabel(curKey, periodType)}</div>
+      <div class="sub">${fmt(curQty)} unidades${isPartial ? ' · <span style="color:var(--signal-4)">parcial ('+weeksInPeriod+' sem.)</span>' : ''}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Vs. período anterior</div>
+      <div class="value">${trendCell(wowPct)}</div>
+      <div class="sub">${havePrev ? fmt(prevQty)+' u. en '+getPeriodLabel(prevKey, periodType)+likeForLikeNote : 'sin dato previo'}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">${periodType==='year' ? 'Promedio semanal del año' : 'Vs. mismo mes año anterior'}</div>
+      <div class="value">${periodType==='year' ? fmt(avgWeekly) : trendCell(yoyPct)}</div>
+      <div class="sub">${periodType==='year' ? 'unidades / semana' : (haveYoy ? fmt(yoyQty)+' u. en '+getPeriodLabel(yoyKey, periodType) : 'sin dato disponible')}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Unidades en promo</div>
+      <div class="value">${promoSharePctCur.toFixed(1)}%</div>
+      <div class="sub">${activeCampaigns.length ? (activeCampaigns.length<=3 ? activeCampaigns.join(', ') : activeCampaigns.length+' campañas') : 'sin campañas activas'}</div>
+    </div>`;
+
+  function breakdownBy(keyFn){
+    const curMap = {}, prevMap = {};
+    curRows.forEach(d=>{ const k=keyFn(d); curMap[k]=(curMap[k]||0)+d.q; });
+    prevRows.forEach(d=>{ const k=keyFn(d); prevMap[k]=(prevMap[k]||0)+d.q; });
+    const ks = [...new Set([...Object.keys(curMap), ...Object.keys(prevMap)])];
+    return ks.map(k=>{
+      const cur = curMap[k]||0, prev = prevMap[k]||0;
+      const shareCur = curQty ? cur/curQty*100 : 0;
+      const sharePrev = prevQty ? prev/prevQty*100 : 0;
+      const varPct = prev>0 ? ((cur-prev)/prev*100) : (cur>0 ? null : 0);
+      return { key:k, cur, prev, shareCur, sharePrev, shareDelta: shareCur-sharePrev, varPct };
+    }).sort((a,b)=>b.cur-a.cur);
+  }
+
+  const byRetail = breakdownBy(d=>d.r);
+  const byProduct = breakdownBy(d=>d.p);
+
+  const alerts = [];
+  if(isPartial) alerts.push(`⚠️ <b>${getPeriodLabel(curKey, periodType)} está parcial</b> (solo ${weeksInPeriod} semana${weeksInPeriod===1?'':'s'} de datos) — las comparaciones contra el período anterior no son directamente comparables todavía.`);
+  if(likeForLikeNote) alerts.push(`ℹ️ ${getPeriodLabel(curKey, periodType)} todavía no tiene el año completo, así que la comparación contra ${getPeriodLabel(prevKey, periodType)} usa solo los meses equivalentes${likeForLikeNote} para que sea comparable.`);
+  [...byRetail.filter(r=>r.cur===0 && r.prev>0).map(r=>`Retail <b>${r.key}</b> no vendió en este período (venía de ${fmt(r.prev)} u.)`),
+   ...byProduct.filter(r=>r.cur===0 && r.prev>0).map(r=>`Producto <b>${r.key}</b> no vendió en este período (venía de ${fmt(r.prev)} u.)`)
+  ].forEach(a=>alerts.push(a));
+  const biggestGain = [...byRetail, ...byProduct].filter(r=>r.shareDelta!==null && isFinite(r.shareDelta)).sort((a,b)=>b.shareDelta-a.shareDelta)[0];
+  const biggestDrop = [...byRetail, ...byProduct].filter(r=>r.shareDelta!==null && isFinite(r.shareDelta)).sort((a,b)=>a.shareDelta-b.shareDelta)[0];
+  if(biggestGain && biggestGain.shareDelta>1) alerts.push(`<b>${biggestGain.key}</b> ganó ${biggestGain.shareDelta.toFixed(1)} pts. de share vs. el período anterior`);
+  if(biggestDrop && biggestDrop.shareDelta<-1) alerts.push(`<b>${biggestDrop.key}</b> perdió ${Math.abs(biggestDrop.shareDelta).toFixed(1)} pts. de share vs. el período anterior`);
+
+  alertsEl.innerHTML = alerts.length
+    ? '<b>Cosas para mirar:</b><br>' + alerts.map(a=>'• '+a).join('<br>')
+    : '<b>Sin alertas destacables</b> — el mix de retail y producto se mantuvo relativamente estable en este período.';
+
+  function renderBreakdownTable(tableId, rows, label){
+    const table = document.getElementById(tableId);
+    table.querySelector('thead').innerHTML = `<tr>
+      <th>${label}</th>
+      <th>Uds. este período</th>
+      <th>Uds. período anterior</th>
+      <th>Var. %</th>
+      <th>Share este período</th>
+      <th>Share período anterior</th>
+      <th>Var. puntos de share</th>
+    </tr>`;
+    table.querySelector('tbody').innerHTML = rows.map(r=>`
+      <tr>
+        <td>${r.key}</td>
+        <td>${fmt(r.cur)}</td>
+        <td>${fmt(r.prev)}</td>
+        <td>${r.varPct!==null ? trendCell(r.varPct) : '—'}</td>
+        <td>${r.shareCur.toFixed(1)}%</td>
+        <td>${r.sharePrev.toFixed(1)}%</td>
+        <td>${(r.shareDelta>0?'+':'')+r.shareDelta.toFixed(1)} pts</td>
+      </tr>`).join('');
+  }
+
+  renderBreakdownTable('tableAccRetail', byRetail, 'Retail');
+  renderBreakdownTable('tableAccProduct', byProduct, 'Producto');
+
+  function renderCompareChart(chartKey, canvasId, rows, colorMap){
+    destroyChart(chartKey);
+    charts[chartKey] = new Chart(document.getElementById(canvasId), {
+      type:'bar',
+      data:{
+        labels: rows.map(r=>r.key),
+        datasets:[
+          { label:getPeriodLabel(prevKey, periodType), data: rows.map(r=>r.prev), backgroundColor:'#C9D3E0', borderRadius:4, maxBarThickness:26 },
+          { label:getPeriodLabel(curKey, periodType), data: rows.map(r=>r.cur), backgroundColor: rows.map(r=>colorMap[r.key]||'#0E9E8C'), borderRadius:4, maxBarThickness:26 }
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+          tooltip:{
+            backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF',
+            borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10,
+            titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11},
+            callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmt(ctx.parsed.y) + ' u.' }
+          }
+        },
+        scales:{
+          x:{ ticks:{ color:'#5B6472', font:{size:10}, maxRotation:20 }, grid:{ display:false } },
+          y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+        }
+      }
+    });
+  }
+
+  renderCompareChart('accRetail', 'chartAccRetail', byRetail, RETAIL_COLORS);
+  renderCompareChart('accProduct', 'chartAccProduct', byProduct, PRODUCT_COLORS);
+}
+
+/* ---------- Última semana: resumen y comparación WoW ---------- */
+
+function renderLastWeek(){
+  const data = filtered();
+  const summaryEl = document.getElementById('lastWeekSummary');
+  const alertsEl = document.getElementById('lastWeekAlerts');
+
+  if(data.length === 0){
+    summaryEl.innerHTML = '<div class="kpi" style="grid-column:1 / -1;"><div class="label">Sin datos</div><div class="sub">Ajustá los filtros para ver el resumen semanal.</div></div>';
+    alertsEl.innerHTML = '';
+    destroyChart('lastWeekRetail'); destroyChart('lastWeekProduct');
+    ['tableLastWeekRetail','tableLastWeekProduct'].forEach(id=>{
+      document.getElementById(id).querySelector('thead').innerHTML = '';
+      document.getElementById(id).querySelector('tbody').innerHTML = '';
+    });
+    return;
+  }
+
+  const totalMap = buildWeeklySeries(data)['Total'] || {};
+  const wks = Object.keys(totalMap).map(Number).sort((a,b)=>a-b);
+  const lastWk = wks[wks.length-1];
+  const prevWk = prevWeekKey(lastWk);
+  const yoyWk = lastWk - 100;
+
+  const lastQty = totalMap[lastWk] || 0;
+  const prevQty = totalMap[prevWk] !== undefined ? totalMap[prevWk] : null;
+  const yoyQty = totalMap[yoyWk] !== undefined ? totalMap[yoyWk] : null;
+  const wowPct = (prevQty && prevQty>0) ? ((lastQty-prevQty)/prevQty*100) : null;
+  const yoyPct = (yoyQty && yoyQty>0) ? ((lastQty-yoyQty)/yoyQty*100) : null;
+
+  const lastWeekRows = data.filter(d=> weekKey(d)===lastWk);
+  const prevWeekRows = data.filter(d=> weekKey(d)===prevWk);
+  const promoQtyLast = lastWeekRows.filter(d=>d.pr==='Si').reduce((a,d)=>a+d.q,0);
+  const promoSharePctLast = lastQty ? (promoQtyLast/lastQty*100) : 0;
+  const activeCampaigns = [...new Set(lastWeekRows.filter(d=>d.pr==='Si' && d.cp!=='-').map(d=>d.cp))];
+
+  document.getElementById('lastWeekSummary').innerHTML = `
+    <div class="kpi">
+      <div class="label">Semana actual</div>
+      <div class="value">${weekLabel(lastWk)}</div>
+      <div class="sub">${fmt(lastQty)} unidades</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Vs. semana anterior</div>
+      <div class="value">${trendCell(wowPct)}</div>
+      <div class="sub">${prevQty!==null ? fmt(prevQty)+' u. en '+weekLabel(prevWk) : 'sin dato previo'}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Vs. misma semana año anterior</div>
+      <div class="value">${trendCell(yoyPct)}</div>
+      <div class="sub">${yoyQty!==null ? fmt(yoyQty)+' u. en '+weekLabel(yoyWk) : 'sin dato disponible'}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Unidades en promo</div>
+      <div class="value">${promoSharePctLast.toFixed(1)}%</div>
+      <div class="sub">${activeCampaigns.length ? activeCampaigns.join(', ') : 'sin campaña activa'}</div>
+    </div>`;
+
+  function breakdownBy(keyFn){
+    const curMap = {}, prevMap = {};
+    lastWeekRows.forEach(d=>{ const k=keyFn(d); curMap[k]=(curMap[k]||0)+d.q; });
+    prevWeekRows.forEach(d=>{ const k=keyFn(d); prevMap[k]=(prevMap[k]||0)+d.q; });
+    const keys = [...new Set([...Object.keys(curMap), ...Object.keys(prevMap)])];
+    return keys.map(k=>{
+      const cur = curMap[k]||0, prev = prevMap[k]||0;
+      const shareCur = lastQty ? cur/lastQty*100 : 0;
+      const sharePrev = prevQty ? prev/prevQty*100 : 0;
+      const varPct = prev>0 ? ((cur-prev)/prev*100) : (cur>0 ? null : 0);
+      return { key:k, cur, prev, shareCur, sharePrev, shareDelta: shareCur-sharePrev, varPct };
+    }).sort((a,b)=>b.cur-a.cur);
+  }
+
+  const byRetail = breakdownBy(d=>d.r);
+  const byProduct = breakdownBy(d=>d.p);
+
+  // Alertas: algo que vendía y esta semana cayó a 0
+  const alerts = [];
+  [...byRetail.filter(r=>r.cur===0 && r.prev>0).map(r=>`Retail <b>${r.key}</b> no vendió esta semana (venía de ${fmt(r.prev)} u.)`),
+   ...byProduct.filter(r=>r.cur===0 && r.prev>0).map(r=>`Producto <b>${r.key}</b> no vendió esta semana (venía de ${fmt(r.prev)} u.)`)
+  ].forEach(a=>alerts.push(a));
+  const biggestGain = [...byRetail, ...byProduct].filter(r=>r.shareDelta!==null && isFinite(r.shareDelta)).sort((a,b)=>b.shareDelta-a.shareDelta)[0];
+  const biggestDrop = [...byRetail, ...byProduct].filter(r=>r.shareDelta!==null && isFinite(r.shareDelta)).sort((a,b)=>a.shareDelta-b.shareDelta)[0];
+  if(biggestGain && biggestGain.shareDelta>1) alerts.push(`<b>${biggestGain.key}</b> ganó ${biggestGain.shareDelta.toFixed(1)} pts. de share vs. la semana anterior`);
+  if(biggestDrop && biggestDrop.shareDelta<-1) alerts.push(`<b>${biggestDrop.key}</b> perdió ${Math.abs(biggestDrop.shareDelta).toFixed(1)} pts. de share vs. la semana anterior`);
+
+  document.getElementById('lastWeekAlerts').innerHTML = alerts.length
+    ? '<b>Cosas para mirar:</b><br>' + alerts.map(a=>'• '+a).join('<br>')
+    : '<b>Sin alertas destacables</b> — el mix de retail y producto se mantuvo relativamente estable esta semana.';
+
+  function renderBreakdownTable(tableId, rows, label){
+    const table = document.getElementById(tableId);
+    table.querySelector('thead').innerHTML = `<tr>
+      <th>${label}</th>
+      <th>Uds. esta semana</th>
+      <th>Uds. semana anterior</th>
+      <th>Var. %</th>
+      <th>Share esta semana</th>
+      <th>Share semana anterior</th>
+      <th>Var. puntos de share</th>
+    </tr>`;
+    table.querySelector('tbody').innerHTML = rows.map(r=>`
+      <tr>
+        <td>${r.key}</td>
+        <td>${fmt(r.cur)}</td>
+        <td>${fmt(r.prev)}</td>
+        <td>${r.varPct!==null ? trendCell(r.varPct) : '—'}</td>
+        <td>${r.shareCur.toFixed(1)}%</td>
+        <td>${r.sharePrev.toFixed(1)}%</td>
+        <td>${(r.shareDelta>0?'+':'')+r.shareDelta.toFixed(1)} pts</td>
+      </tr>`).join('');
+  }
+
+  renderBreakdownTable('tableLastWeekRetail', byRetail, 'Retail');
+  renderBreakdownTable('tableLastWeekProduct', byProduct, 'Producto');
+
+  function renderCompareChart(chartKey, canvasId, rows, colorMap){
+    destroyChart(chartKey);
+    charts[chartKey] = new Chart(document.getElementById(canvasId), {
+      type:'bar',
+      data:{
+        labels: rows.map(r=>r.key),
+        datasets:[
+          { label:weekLabel(prevWk), data: rows.map(r=>r.prev), backgroundColor:'#C9D3E0', borderRadius:4, maxBarThickness:26 },
+          { label:weekLabel(lastWk), data: rows.map(r=>r.cur), backgroundColor: rows.map(r=>colorMap[r.key]||'#0E9E8C'), borderRadius:4, maxBarThickness:26 }
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+          tooltip:{
+            backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF',
+            borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10,
+            titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11},
+            callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmt(ctx.parsed.y) + ' u.' }
+          }
+        },
+        scales:{
+          x:{ ticks:{ color:'#5B6472', font:{size:10}, maxRotation:20 }, grid:{ display:false } },
+          y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+        }
+      }
+    });
+  }
+
+  renderCompareChart('lastWeekRetail', 'chartLastWeekRetail', byRetail, RETAIL_COLORS);
+  renderCompareChart('lastWeekProduct', 'chartLastWeekProduct', byProduct, PRODUCT_COLORS);
+}
+
+/* ---------- English Summary (consolidated, English-language view) ---------- */
+
+function renderEnglishSummary(){
+  const data = filtered();
+  const periodStats = computePeriodStats(data);
+  const totalQty = data.reduce((a,d)=>a+d.q,0);
+
+  // 1. Total kits & product ranking
+  const byProductQty = {};
+  data.forEach(d=>{ byProductQty[d.p] = (byProductQty[d.p]||0)+d.q; });
+  const productRanking = Object.entries(byProductQty)
+    .map(([p,q])=>({ product:p, qty:q, share: totalQty ? q/totalQty*100 : 0 }))
+    .sort((a,b)=>b.qty-a.qty);
+
+  document.getElementById('enTotalKits').innerHTML = `
+    <div class="kpi">
+      <div class="label">Total kits sold</div>
+      <div class="value">${fmtEN(totalQty)}</div>
+      <div class="sub">${fmtEN(data.length)} records in current filter</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Leading product</div>
+      <div class="value">${productRanking[0] ? productRanking[0].product : '—'}</div>
+      <div class="sub">${productRanking[0] ? productRanking[0].share.toFixed(1)+'% of volume' : '—'}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Products tracked</div>
+      <div class="value">${productRanking.length}</div>
+      <div class="sub">with at least 1 unit sold</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Weeks in range</div>
+      <div class="value">${periodStats.totalWeeks}</div>
+      <div class="sub">per current filters</div>
+    </div>`;
+
+  const prTable = document.getElementById('tableEnProductRank');
+  prTable.querySelector('thead').innerHTML = `<tr><th>#</th><th>Product</th><th>Units</th><th>Share</th></tr>`;
+  prTable.querySelector('tbody').innerHTML = productRanking.map((r,i)=>`
+    <tr><td>${i+1}</td><td>${r.product}</td><td>${fmtEN(r.qty)}</td><td>${r.share.toFixed(1)}%</td></tr>`).join('');
+
+  // 2. Weekly average by product & retailer
+  const modelStats = groupWeeklyStats(data, d=>d.p, periodStats);
+  const retailStats = groupWeeklyStats(data, d=>d.r, periodStats);
+
+  function renderEnAvgTable(tableId, rows, label){
+    const table = document.getElementById(tableId);
+    table.querySelector('thead').innerHTML = `<tr>
+      <th>${label}</th><th>Active weeks</th><th>Avg/week (active)</th><th>Avg/week (period)</th><th>Trend (last 8w)</th><th>Total units</th>
+    </tr>`;
+    table.querySelector('tbody').innerHTML = rows.map(r=>`
+      <tr>
+        <td>${r.group}</td>
+        <td>${r.activeWeeks}</td>
+        <td>${fmtEN(r.avgActive)}</td>
+        <td>${fmtEN(r.avgAll)}</td>
+        <td>${trendCell(r.trendPct)}</td>
+        <td>${fmtEN(r.total)}</td>
+      </tr>`).join('');
+  }
+  renderEnAvgTable('tableEnAvgProduct', modelStats, 'Product');
+  renderEnAvgTable('tableEnAvgRetail', retailStats, 'Retailer');
+
+  destroyChart('enAvgProduct');
+  charts.enAvgProduct = new Chart(document.getElementById('chartEnAvgProduct'), {
+    type:'bar',
+    data:{ labels: modelStats.map(r=>r.group), datasets:[{ data: modelStats.map(r=>r.avgActive), backgroundColor: modelStats.map(r=>PRODUCT_COLORS[r.group]||'#8890A0'), borderRadius:4, maxBarThickness:40 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      scales:{ x:{ ticks:{ color:'#5B6472', font:{size:11} }, grid:{ display:false } }, y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } } } }
+  });
+
+  destroyChart('enAvgRetail');
+  charts.enAvgRetail = new Chart(document.getElementById('chartEnAvgRetail'), {
+    type:'bar',
+    data:{ labels: retailStats.map(r=>r.group), datasets:[{ data: retailStats.map(r=>r.avgActive), backgroundColor: retailStats.map(r=>RETAIL_COLORS[r.group]||'#8890A0'), borderRadius:4, maxBarThickness:40 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      scales:{ x:{ ticks:{ color:'#5B6472', font:{size:10}, maxRotation:20 }, grid:{ display:false } }, y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } } } }
+  });
+
+  // 3. Weekly sales evolution
+  const byWeekEn = {};
+  data.forEach(d=>{ const k=d.y*100+d.s; byWeekEn[k]=(byWeekEn[k]||0)+d.q; });
+  const weekKeysEn = Object.keys(byWeekEn).sort((a,b)=>a-b);
+  const weekLabelsEn = weekKeysEn.map(k=>weekLabelEN(Number(k)));
+  const weekValuesEn = weekKeysEn.map(k=>byWeekEn[k]);
+  const trendLineEn = linearTrendLine(weekValuesEn);
+
+  destroyChart('enWeekly');
+  charts.enWeekly = new Chart(document.getElementById('chartEnWeekly'), {
+    type:'line',
+    data:{ labels: weekLabelsEn, datasets:[
+      { label:'Units', data: weekValuesEn, borderColor:'#0E9E8C', backgroundColor:'rgba(14,158,140,0.10)', fill:true, tension:0.3, pointRadius:0, pointHoverRadius:5, pointHitRadius:12, pointBackgroundColor:'#0E9E8C', pointBorderColor:'#FFFFFF', pointBorderWidth:1.5, borderWidth:2, order:2 },
+      { label:'Trend', data: trendLineEn, borderColor:'#D6432F', backgroundColor:'transparent', fill:false, borderDash:[6,4], borderWidth:2, pointRadius:0, tension:0, order:1 }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:true, position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+        tooltip:{ enabled:true, mode:'index', intersect:false, backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10, titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:12, weight:'600'}, callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmtEN(ctx.parsed.y) + ' units' } }
+      },
+      scales:{
+        x:{ ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  // 4. Retailer ranking with share & quantities
+  const byRetailQty = {};
+  data.forEach(d=>{ byRetailQty[d.r] = (byRetailQty[d.r]||0)+d.q; });
+  const retailRanking = Object.entries(byRetailQty)
+    .map(([r,q])=>({ retail:r, qty:q, share: totalQty ? q/totalQty*100 : 0 }))
+    .sort((a,b)=>b.qty-a.qty);
+
+  const rrTable = document.getElementById('tableEnRetailRank');
+  rrTable.querySelector('thead').innerHTML = `<tr><th>#</th><th>Retailer</th><th>Units</th><th>Share</th></tr>`;
+  rrTable.querySelector('tbody').innerHTML = retailRanking.map((r,i)=>`
+    <tr><td>${i+1}</td><td>${r.retail}</td><td>${fmtEN(r.qty)}</td><td>${r.share.toFixed(1)}%</td></tr>`).join('');
+
+  // 5. Adoption curve at launch
+  const byProductWeekEn = {};
+  data.forEach(d=>{
+    byProductWeekEn[d.p] = byProductWeekEn[d.p] || {};
+    const wk = d.y*100+d.s;
+    byProductWeekEn[d.p][wk] = (byProductWeekEn[d.p][wk]||0) + d.q;
+  });
+  const launchRowsEn = Object.keys(byProductWeekEn).map(p=>{
+    const weekMap = byProductWeekEn[p];
+    const wks = Object.keys(weekMap).map(Number).sort((a,b)=>a-b);
+    const launchWk = wks.find(wk=>weekMap[wk]>0);
+    if(launchWk===undefined) return null;
+    const lastWk = wks[wks.length-1];
+    const series = []; let cursor = launchWk; let idx = 0;
+    while(true){
+      series.push(weekMap[cursor]||0);
+      if(cursor===lastWk || idx>200) break;
+      cursor = nextWeekKey(cursor); idx++;
+    }
+    return { product:p, launchWk, series };
+  }).filter(Boolean).sort((a,b)=>a.launchWk-b.launchWk);
+
+  const maxLenEn = Math.max(0, ...launchRowsEn.map(r=>r.series.length));
+  const xLabelsEn = Array.from({length:maxLenEn}, (_,i)=>'W+'+i);
+
+  destroyChart('enLaunch');
+  charts.enLaunch = new Chart(document.getElementById('chartEnLaunch'), {
+    type:'line',
+    data:{
+      labels: xLabelsEn,
+      datasets: launchRowsEn.map(r=>({
+        label:r.product, data:r.series, borderColor: PRODUCT_COLORS[r.product]||'#8890A0',
+        backgroundColor:'transparent', fill:false, tension:0.25, pointRadius:0, pointHoverRadius:4, pointHitRadius:10, borderWidth:2
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+        tooltip:{ enabled:true, mode:'index', intersect:false, backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10, titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11}, callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmtEN(ctx.parsed.y) + ' units' } }
+      },
+      scales:{
+        x:{ title:{ display:true, text:'Weeks since launch', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  // 6. Discount vs. sales growth (promotions)
+  const totalMapEn = buildWeeklySeries(data)['Total'] || {};
+  const instancesEn = buildCampaignInstances(data);
+  const rowsEn = instancesEn.map(inst=>{
+    const allDiscounts = inst.weeks.flatMap(wk=>(inst.weekMap[wk] && inst.weekMap[wk].discounts) || []);
+    const discount = allDiscounts.length ? allDiscounts.reduce((a,b)=>a+b,0)/allDiscounts.length : null;
+    const avgDuring = inst.weeks.reduce((a,wk)=>a+(totalMapEn[wk]||0),0) / inst.weeks.length;
+    const baselineWeeks = [];
+    let cursor = inst.weeks[0];
+    for(let i=0;i<4;i++){ cursor = prevWeekKey(cursor); if(totalMapEn[cursor]!==undefined) baselineWeeks.push(cursor); }
+    const baselineAvg = baselineWeeks.length ? baselineWeeks.reduce((a,wk)=>a+totalMapEn[wk],0)/baselineWeeks.length : null;
+    const growthPct = (baselineAvg && baselineAvg>0) ? ((avgDuring-baselineAvg)/baselineAvg*100) : null;
+    const label = `${inst.name} (${weekLabelEN(inst.weeks[0])}${inst.weeks.length>1 ? '–'+weekLabelEN(inst.weeks[inst.weeks.length-1]) : ''})`;
+    return { label, name:inst.name, weekStart: inst.weeks[0], discount, weeks:inst.weeks.length, avgDuring, baselineAvg, growthPct };
+  });
+
+  const knownEn = rowsEn.filter(r=>r.discount!==null && r.growthPct!==null);
+  const regEn = linRegXY(knownEn.map(r=>({x:r.discount, y:r.growthPct})));
+
+  destroyChart('enElasticity');
+  const scatterPointsEn = knownEn.map(r=>({ x:r.discount, y:r.growthPct, label:r.name }));
+  const regLineEn = regEn ? [0,50].map(x=>({x, y: regEn.intercept + regEn.slope*x})) : [];
+  charts.enElasticity = new Chart(document.getElementById('chartEnElasticity'), {
+    type:'scatter',
+    data:{
+      datasets:[
+        { label:'Campaigns', data: scatterPointsEn, backgroundColor:'#0E9E8C', borderColor:'#0E9E8C', pointRadius:6, pointHoverRadius:8 },
+        { label:'Regression', data: regLineEn, type:'line', borderColor:'#D6432F', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false, tension:0 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+        tooltip:{
+          backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10,
+          titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11},
+          callbacks:{
+            label:(ctx)=>{
+              if(ctx.dataset.label==='Regression') return ' regression: ' + ctx.parsed.y.toFixed(1) + '%';
+              const p = ctx.raw;
+              return ' ' + p.label + ': ' + p.x + '% disc. → ' + (p.y>0?'+':'') + p.y.toFixed(1) + '%';
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ title:{ display:true, text:'Discount (%)', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', callback:(v)=>v+'%', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ title:{ display:true, text:'Growth vs. prior 4 weeks (%)', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', callback:(v)=>v+'%', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  const elTableEn = document.getElementById('tableEnElasticity');
+  elTableEn.querySelector('thead').innerHTML = `<tr>
+    <th>Campaign</th><th>Discount</th><th>Weeks</th><th>Prior avg/week</th><th>During avg/week</th><th>Growth</th>
+  </tr>`;
+  elTableEn.querySelector('tbody').innerHTML = rowsEn.slice().sort((a,b)=>a.weekStart-b.weekStart).map(r=>`
+    <tr>
+      <td>${r.label}</td>
+      <td>${r.discount!==null ? r.discount+'%' : 'N/A'}</td>
+      <td>${r.weeks}</td>
+      <td>${r.baselineAvg!==null ? fmtEN(r.baselineAvg) : '—'}</td>
+      <td>${fmtEN(r.avgDuring)}</td>
+      <td>${r.growthPct!==null ? trendCell(r.growthPct) : '—'}</td>
+    </tr>`).join('');
+}
+
 function refreshAll(){
   renderFilters();
   renderKPIs();
@@ -1621,6 +2377,9 @@ function refreshAll(){
   renderForecast();
   renderElasticity();
   renderLaunch();
+  renderLastWeek();
+  renderAccumulated();
+  renderEnglishSummary();
 }
 
 // Carga de datos desde data.json (separado del HTML para poder actualizarlo cada semana
