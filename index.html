@@ -703,6 +703,34 @@
     <div class="notes" style="margin-top:16px;">
       <b>Notes:</b> figures are dispatched units — the source file has no price/revenue dimension. All numbers on this page respect the dashboard's active filters, so narrowing by Retail, Product, Year or Promo recomputes every section here.
     </div>
+
+    <h3 class="section-title">Distributor channel inventory — weekly evolution &amp; supply risk</h3>
+    <p class="desc" style="margin:-4px 0 12px;">Source: distributor inventory feed, Argentina, all six retail channels <b>excluding Stylus</b> (Stylus holds its own warehouse stock, which is a different metric than retail channel stock and isn't shown here). This section is independent of the filters above — it always covers the full channel and all available weeks.</p>
+
+    <div class="avg-summary" id="invSummary"></div>
+
+    <div class="notes" id="invAlerts" style="margin-bottom:18px;"></div>
+
+    <div class="chart-card full" style="margin-bottom:18px;">
+      <h3>Weekly channel inventory by model</h3>
+      <p class="desc">Ending on-hand stock at retail, summed across all six retailers, per week. Sharp drops toward zero are the clearest visual signal of a stockout.</p>
+      <div class="chart-holder tall"><canvas id="chartInvWeekly"></canvas></div>
+    </div>
+
+    <h3 class="section-title">Peak, trough &amp; current stock by model</h3>
+    <div class="table-scroll avg-table-scroll" style="margin-bottom:22px;">
+      <table id="tableInvPeaks" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <h3 class="section-title">Stockout events detected</h3>
+    <p class="desc" style="margin:-4px 0 12px;">A "stockout event" is a run of one or more consecutive weeks where total channel inventory for a model fell to zero, after that model had already been carrying stock. "Est. lost sellout" projects the event's duration forward at the average weekly sellout rate from the 4 weeks immediately before the drop — a rough estimate of demand that couldn't be filled, not a confirmed revenue loss.</p>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tableInvStockouts" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <div class="notes" style="margin-top:16px;">
+      <b>Notes:</b> the source file's last 3 weeks (as of this data pull) repeat the prior week's values with no sellout/sellin — that's the feed not having settled yet, not a real business event, so this section's analysis stops at the last week with actual sellout activity. "Ch. Inventory" is retail on-shelf/warehouse stock at each of the six retailers; it excludes Stylus's own distributor-level stock by design, per your request.
+    </div>
   </div>
 
   <footer>
@@ -714,6 +742,8 @@
 
 <script>
 let RAW = [];
+let INV = [];
+const INV_MODEL_COLORS = { 'Mini': '#0E9E8C', 'Mini X': '#6E5CD9', 'V4': '#2F6FE0', 'V5': '#C9861A' };
 
 const MONTH_NAMES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const RETAIL_COLORS = {
@@ -2368,6 +2398,171 @@ function renderEnglishSummary(){
     </tr>`).join('');
 }
 
+/* ---------- Distributor channel inventory (English Summary only, independent of the top filters) ---------- */
+
+function renderInventory(){
+  if(!INV || INV.length === 0){
+    document.getElementById('invSummary').innerHTML = '<div class="kpi" style="grid-column:1 / -1;"><div class="label">No inventory data loaded</div><div class="sub">inventory.json was not found next to index.html.</div></div>';
+    return;
+  }
+
+  const invWeekKey = d => d.y*100 + d.s;
+
+  // Last week with real activity across the whole feed — trailing weeks that just repeat
+  // the prior week's stock with zero sellout/sellin are a feed lag, not a real flat period.
+  const soByWeek = {};
+  INV.forEach(d=>{ const k=invWeekKey(d); soByWeek[k]=(soByWeek[k]||0)+d.so; });
+  const allInvWeeks = [...new Set(INV.map(invWeekKey))].sort((a,b)=>a-b);
+  let lastActualWeek = allInvWeeks[allInvWeeks.length-1];
+  for(let i=allInvWeeks.length-1;i>=0;i--){
+    if(soByWeek[allInvWeeks[i]] > 0){ lastActualWeek = allInvWeeks[i]; break; }
+  }
+  const activeWeeks = allInvWeeks.filter(w=>w<=lastActualWeek);
+  const data = INV.filter(d=> invWeekKey(d) <= lastActualWeek);
+
+  const models = [...new Set(data.map(d=>d.mo))];
+  const retailers = [...new Set(data.map(d=>d.r))];
+
+  // Weekly total ch / sellout / sellin per model
+  const byModelWeek = {};
+  models.forEach(mo=>{ byModelWeek[mo] = {}; activeWeeks.forEach(w=>{ byModelWeek[mo][w] = { ch:0, so:0, si:0 }; }); });
+  data.forEach(d=>{
+    const wk = invWeekKey(d);
+    const cell = byModelWeek[d.mo][wk];
+    cell.ch += d.ch; cell.so += d.so; cell.si += d.si;
+  });
+
+  // Peak / trough / current per model, and stockout-run detection
+  const peakRows = [];
+  const stockoutRows = [];
+  models.forEach(mo=>{
+    const series = activeWeeks.map(w=>byModelWeek[mo][w]);
+    let peak = {v:-1, w:null}, trough = {v:Infinity, w:null};
+    let hasLaunched = false, runStart = null, runLen = 0;
+    activeWeeks.forEach((w,i)=>{
+      const ch = series[i].ch;
+      if(ch > peak.v){ peak = {v:ch, w}; }
+      if(hasLaunched && ch < trough.v){ trough = {v:ch, w}; }
+      if(ch > 0) hasLaunched = true;
+      if(hasLaunched && ch === 0){
+        if(runStart === null) runStart = w;
+        runLen++;
+      } else if(runStart !== null){
+        stockoutRows.push(closeRun(mo, runStart, runLen, activeWeeks, byModelWeek));
+        runStart = null; runLen = 0;
+      }
+    });
+    if(runStart !== null) stockoutRows.push(closeRun(mo, runStart, runLen, activeWeeks, byModelWeek));
+    const current = byModelWeek[mo][activeWeeks[activeWeeks.length-1]].ch;
+    peakRows.push({ model:mo, peak, trough: trough.w===null? {v:0,w:null} : trough, current });
+  });
+
+  function closeRun(mo, runStart, runLen, activeWeeks, byModelWeek){
+    const idx = activeWeeks.indexOf(runStart);
+    const baselineWeeks = activeWeeks.slice(Math.max(0, idx-4), idx);
+    const baselineAvg = baselineWeeks.length ? baselineWeeks.reduce((a,w)=>a+byModelWeek[mo][w].so,0)/baselineWeeks.length : null;
+    const runWeeks = activeWeeks.slice(idx, idx+runLen);
+    const lastWeek = runWeeks[runWeeks.length-1];
+    return { model:mo, startWeek:runStart, endWeek:lastWeek, length:runLen, baselineAvg, estLost: baselineAvg!==null ? baselineAvg*runLen : null };
+  }
+
+  // KPIs
+  const totalNow = models.reduce((a,mo)=>a+byModelWeek[mo][activeWeeks[activeWeeks.length-1]].ch, 0);
+  const totalStockoutWeeks = stockoutRows.reduce((a,r)=>a+r.length, 0);
+  const worstEvent = stockoutRows.slice().sort((a,b)=>b.length-a.length)[0];
+  const totalEstLost = stockoutRows.reduce((a,r)=>a+(r.estLost||0),0);
+
+  document.getElementById('invSummary').innerHTML = `
+    <div class="kpi">
+      <div class="label">Channel inventory (latest week)</div>
+      <div class="value">${fmtEN(totalNow)}</div>
+      <div class="sub">${weekLabelEN(activeWeeks[activeWeeks.length-1])} · ${retailers.length} retailers, ${models.length} models</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Stockout weeks detected</div>
+      <div class="value">${totalStockoutWeeks}</div>
+      <div class="sub">${stockoutRows.length} event${stockoutRows.length===1?'':'s'} across all models</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Longest stockout</div>
+      <div class="value">${worstEvent ? worstEvent.length+' wk'+(worstEvent.length===1?'':'s') : '—'}</div>
+      <div class="sub">${worstEvent ? worstEvent.model+', '+weekLabelEN(worstEvent.startWeek)+'–'+weekLabelEN(worstEvent.endWeek) : 'none found'}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Est. lost sellout (all events)</div>
+      <div class="value">${totalEstLost ? fmtEN(totalEstLost) : '—'}</div>
+      <div class="sub">units, at pre-event weekly pace</div>
+    </div>`;
+
+  const alertsEl = document.getElementById('invAlerts');
+  if(stockoutRows.length){
+    alertsEl.innerHTML = '<b>Things to look at:</b><br>' + stockoutRows.slice().sort((a,b)=>b.length-a.length).map(r=>
+      `• <b>${r.model}</b> had zero channel inventory for ${r.length} week${r.length===1?'':'s'} (${weekLabelEN(r.startWeek)}${r.length>1?'–'+weekLabelEN(r.endWeek):''})${r.estLost!==null ? ', an estimated '+fmtEN(r.estLost)+' units of unmet sellout at the pace sold in the 4 weeks before the drop' : ''}.`
+    ).join('<br>');
+  } else {
+    alertsEl.innerHTML = '<b>No full stockouts detected</b> — every tracked model kept some channel inventory across all available weeks.';
+  }
+
+  // Chart: weekly channel inventory by model
+  const weekLabelsInv = activeWeeks.map(w=>weekLabelEN(w));
+  destroyChart('invWeekly');
+  charts.invWeekly = new Chart(document.getElementById('chartInvWeekly'), {
+    type:'line',
+    data:{
+      labels: weekLabelsInv,
+      datasets: models.map(mo=>({
+        label:mo,
+        data: activeWeeks.map(w=>byModelWeek[mo][w].ch),
+        borderColor: INV_MODEL_COLORS[mo] || '#8890A0',
+        backgroundColor:'transparent', fill:false, tension:0.25,
+        pointRadius:0, pointHoverRadius:4, pointHitRadius:10, borderWidth:2
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+        tooltip:{ enabled:true, mode:'index', intersect:false, backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10, titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11}, callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmtEN(ctx.parsed.y) + ' units' } }
+      },
+      scales:{
+        x:{ ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  // Peak/trough/current table
+  const peakTable = document.getElementById('tableInvPeaks');
+  peakTable.querySelector('thead').innerHTML = `<tr>
+    <th>Model</th><th>Peak inventory</th><th>Peak week</th><th>Trough inventory</th><th>Trough week</th><th>Current (${weekLabelEN(activeWeeks[activeWeeks.length-1])})</th>
+  </tr>`;
+  peakTable.querySelector('tbody').innerHTML = peakRows.map(r=>`
+    <tr>
+      <td>${r.model}</td>
+      <td>${fmtEN(r.peak.v)}</td>
+      <td>${weekLabelEN(r.peak.w)}</td>
+      <td>${fmtEN(r.trough.v)}</td>
+      <td>${r.trough.w!==null ? weekLabelEN(r.trough.w) : '—'}</td>
+      <td>${fmtEN(r.current)}</td>
+    </tr>`).join('');
+
+  // Stockout events table
+  const soTable = document.getElementById('tableInvStockouts');
+  soTable.querySelector('thead').innerHTML = `<tr>
+    <th>Model</th><th>Weeks out of stock</th><th>Duration</th><th>Avg/week before drop</th><th>Est. lost sellout</th>
+  </tr>`;
+  soTable.querySelector('tbody').innerHTML = stockoutRows.length
+    ? stockoutRows.slice().sort((a,b)=>a.startWeek-b.startWeek).map(r=>`
+      <tr>
+        <td>${r.model}</td>
+        <td>${weekLabelEN(r.startWeek)}${r.length>1 ? '–'+weekLabelEN(r.endWeek) : ''}</td>
+        <td>${r.length} week${r.length===1?'':'s'}</td>
+        <td>${r.baselineAvg!==null ? fmtEN(r.baselineAvg) : '—'}</td>
+        <td>${r.estLost!==null ? fmtEN(r.estLost) : '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5">No stockout events in the available weeks.</td></tr>';
+}
+
 function refreshAll(){
   renderFilters();
   renderKPIs();
@@ -2418,6 +2613,14 @@ async function init(){
   const dates = RAW.map(d=>d.f).sort();
   document.getElementById('periodTag').textContent = `${dates[0]} → ${dates[dates.length-1]}`;
   document.getElementById('footRange').textContent = `${RAW.length.toLocaleString('es-AR')} registros · datos al ${dates[dates.length-1]}`;
+
+  try{
+    const invResp = await fetch('inventory.json', { cache: 'no-store' });
+    if(invResp.ok) INV = await invResp.json();
+  }catch(err){
+    console.error('No se pudo cargar inventory.json', err);
+  }
+  renderInventory();
 
   refreshAll();
 }
