@@ -701,6 +701,30 @@
       <table id="tableEnElasticity" class="avg-table"><thead></thead><tbody></tbody></table>
     </div>
 
+    <h3 class="section-title">Post-promo drop-off, by product</h3>
+    <p class="desc" style="margin:-4px 0 12px;">Does a promo just pull sales forward, then "melt" the following weeks? For every campaign, this compares each product's own average weekly units in the 4 weeks right before the promo against its average in the 4 weeks right after it ends (promo weeks themselves excluded from both windows). A negative change means that product sold slower after the promo than it did before — consistent with pull-forward; a flat or positive change means the promo looks closer to incremental demand.</p>
+
+    <div class="avg-summary" id="promoDropSummary"></div>
+
+    <div class="chart-card full" style="margin-bottom:18px;">
+      <h3>Avg units/week: 4 weeks before vs. 4 weeks after each promo</h3>
+      <p class="desc">Per product, averaged across all campaigns in the current filter.</p>
+      <div class="chart-holder tall"><canvas id="chartPromoDrop"></canvas></div>
+    </div>
+
+    <div class="table-scroll avg-table-scroll" style="margin-bottom:12px;">
+      <table id="tablePromoDropSummary" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <h3 class="section-title">Detail by campaign &amp; product</h3>
+    <div class="table-scroll avg-table-scroll">
+      <table id="tablePromoDropDetail" class="avg-table"><thead></thead><tbody></tbody></table>
+    </div>
+
+    <div class="notes" style="margin-top:16px;">
+      <b>Notes:</b> a product is only included for a campaign if it had sales in the surrounding 4-week windows — products not yet launched or already discontinued around that campaign are skipped. When two campaigns run close together, the "after" window of one can overlap the "before" window of the next, which can understate the apparent drop — check the campaign dates in the detail table below when a result looks surprising. This is a back-of-envelope read, not a controlled experiment: broader market trends and seasonality in that period are not separated out from the promo's own effect.
+    </div>
+
     <div class="notes" style="margin-top:16px;">
       <b>Notes:</b> figures are dispatched units — the source file has no price/revenue dimension. All numbers on this page respect the dashboard's active filters, so narrowing by Retail, Product, Year or Promo recomputes every section here.
     </div>
@@ -2501,6 +2525,131 @@ function renderEnglishSummary(){
       <td>${r.baselineAvg!==null ? fmtEN(r.baselineAvg) : '—'}</td>
       <td>${fmtEN(r.avgDuring)}</td>
       <td>${r.growthPct!==null ? trendCell(r.growthPct) : '—'}</td>
+    </tr>`).join('');
+
+  // 7. Post-promo drop-off, by product — does the promo just pull sales forward?
+  const promoProducts = [...new Set(data.map(d=>d.p))];
+  const productWeekMapPromo = {};
+  promoProducts.forEach(p=>{ productWeekMapPromo[p] = {}; });
+  data.forEach(d=>{ const wk=d.y*100+d.s; productWeekMapPromo[d.p][wk] = (productWeekMapPromo[d.p][wk]||0) + d.q; });
+
+  function avgOverWeeks(weekMap, weeks){
+    if(!weeks.length) return 0;
+    return weeks.reduce((a,wk)=>a+(weekMap[wk]||0),0) / weeks.length;
+  }
+
+  const dropDetailRows = [];
+  instancesEn.forEach(inst=>{
+    const beforeWeeks = []; let cb = inst.weeks[0];
+    for(let i=0;i<4;i++){ cb = prevWeekKey(cb); beforeWeeks.push(cb); }
+    const afterWeeks = []; let ca = inst.weeks[inst.weeks.length-1];
+    for(let i=0;i<4;i++){ ca = nextWeekKey(ca); afterWeeks.push(ca); }
+
+    promoProducts.forEach(p=>{
+      const weekMap = productWeekMapPromo[p];
+      const avgBefore = avgOverWeeks(weekMap, beforeWeeks);
+      const avgAfter = avgOverWeeks(weekMap, afterWeeks);
+      if(avgBefore===0 && avgAfter===0) return; // product wasn't active around this campaign
+      const changePct = avgBefore>0 ? ((avgAfter-avgBefore)/avgBefore*100) : null;
+      dropDetailRows.push({
+        campaign: inst.name,
+        label: `${inst.name} (${weekLabelEN(inst.weeks[0])}${inst.weeks.length>1?'–'+weekLabelEN(inst.weeks[inst.weeks.length-1]):''})`,
+        weekStart: inst.weeks[0], product:p, avgBefore, avgAfter, changePct
+      });
+    });
+  });
+
+  const dropByProduct = {};
+  dropDetailRows.forEach(r=>{
+    dropByProduct[r.product] = dropByProduct[r.product] || { product:r.product, campaigns:0, sumBefore:0, sumAfter:0, dips:0 };
+    const agg = dropByProduct[r.product];
+    agg.campaigns++; agg.sumBefore += r.avgBefore; agg.sumAfter += r.avgAfter;
+    if(r.changePct!==null && r.changePct<0) agg.dips++;
+  });
+  const dropSummaryRows = Object.values(dropByProduct).map(agg=>{
+    const avgBefore = agg.sumBefore/agg.campaigns;
+    const avgAfter = agg.sumAfter/agg.campaigns;
+    const changePct = avgBefore>0 ? ((avgAfter-avgBefore)/avgBefore*100) : null;
+    return { product:agg.product, campaigns:agg.campaigns, avgBefore, avgAfter, changePct, dips:agg.dips };
+  }).sort((a,b)=>(a.changePct??999)-(b.changePct??999));
+
+  const validChanges = dropSummaryRows.filter(r=>r.changePct!==null);
+  const avgChangeAll = validChanges.length ? validChanges.reduce((a,r)=>a+r.changePct,0)/validChanges.length : null;
+  const dippingProducts = dropSummaryRows.filter(r=>r.changePct!==null && r.changePct<0);
+  const worstDrop = validChanges.slice().sort((a,b)=>a.changePct-b.changePct)[0];
+
+  document.getElementById('promoDropSummary').innerHTML = `
+    <div class="kpi">
+      <div class="label">Products analyzed</div>
+      <div class="value">${dropSummaryRows.length}</div>
+      <div class="sub">across ${instancesEn.length} campaign${instancesEn.length===1?'':'s'} in filter</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Avg. post-promo change</div>
+      <div class="value">${avgChangeAll!==null ? trendCell(avgChangeAll) : '—'}</div>
+      <div class="sub">across all products, all campaigns</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Products with a post-promo dip</div>
+      <div class="value">${dippingProducts.length} / ${dropSummaryRows.length}</div>
+      <div class="sub">avg. after &lt; avg. before</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Biggest drop-off</div>
+      <div class="value">${worstDrop ? worstDrop.product : '—'}</div>
+      <div class="sub">${worstDrop ? trendCell(worstDrop.changePct)+' vs. its own pre-promo average' : '—'}</div>
+    </div>`;
+
+  destroyChart('promoDrop');
+  charts.promoDrop = new Chart(document.getElementById('chartPromoDrop'), {
+    type:'bar',
+    data:{
+      labels: dropSummaryRows.map(r=>r.product),
+      datasets:[
+        { label:'4 wks before', data: dropSummaryRows.map(r=>r.avgBefore), backgroundColor:'#C9D3E0', borderRadius:4, maxBarThickness:34,
+          datalabels:{ display:true, align:'end', anchor:'end', offset:4, color:'#5B6472', font:{family:'JetBrains Mono', size:10, weight:'600'}, formatter:(v)=>fmtEN(v) } },
+        { label:'4 wks after', data: dropSummaryRows.map(r=>r.avgAfter), backgroundColor: dropSummaryRows.map(r=>PRODUCT_COLORS[r.product]||'#8890A0'), borderRadius:4, maxBarThickness:34,
+          datalabels:{ display:true, align:'end', anchor:'end', offset:4, color:'#5B6472', font:{family:'JetBrains Mono', size:10, weight:'600'}, formatter:(v)=>fmtEN(v) } }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:20 } },
+      plugins:{
+        legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+        tooltip:{ backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10, titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11}, callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmtEN(ctx.parsed.y) + ' units/wk' } }
+      },
+      scales:{
+        x:{ ticks:{ color:'#5B6472', font:{size:10.5}, maxRotation:20 }, grid:{ display:false } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10}, callback:(v)=>fmtEN(v) }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  const dropSumTable = document.getElementById('tablePromoDropSummary');
+  dropSumTable.querySelector('thead').innerHTML = `<tr>
+    <th>Product</th><th>Campaigns</th><th>Avg/wk before</th><th>Avg/wk after</th><th>Change</th><th>Dips (of campaigns)</th>
+  </tr>`;
+  dropSumTable.querySelector('tbody').innerHTML = dropSummaryRows.map(r=>`
+    <tr>
+      <td>${r.product}</td>
+      <td>${r.campaigns}</td>
+      <td>${fmtEN(r.avgBefore)}</td>
+      <td>${fmtEN(r.avgAfter)}</td>
+      <td>${r.changePct!==null ? trendCell(r.changePct) : '—'}</td>
+      <td>${r.dips} / ${r.campaigns}</td>
+    </tr>`).join('');
+
+  const dropDetailTable = document.getElementById('tablePromoDropDetail');
+  dropDetailTable.querySelector('thead').innerHTML = `<tr>
+    <th>Campaign</th><th>Product</th><th>Avg/wk before</th><th>Avg/wk after</th><th>Change</th>
+  </tr>`;
+  dropDetailTable.querySelector('tbody').innerHTML = dropDetailRows.slice().sort((a,b)=> a.weekStart-b.weekStart || a.product.localeCompare(b.product)).map(r=>`
+    <tr>
+      <td>${r.label}</td>
+      <td>${r.product}</td>
+      <td>${fmtEN(r.avgBefore)}</td>
+      <td>${fmtEN(r.avgAfter)}</td>
+      <td>${r.changePct!==null ? trendCell(r.changePct) : '—'}</td>
     </tr>`).join('');
 }
 
