@@ -705,7 +705,27 @@
     </div>
 
     <h3 class="section-title">Distributor channel inventory — weekly evolution &amp; supply risk</h3>
-    <p class="desc" style="margin:-4px 0 12px;">Source: distributor inventory feed, Argentina, all six retail channels <b>excluding Stylus</b> (Stylus holds its own warehouse stock, which is a different metric than retail channel stock and isn't shown here). This section is independent of the filters above — it always covers the full channel and all available weeks.</p>
+    <p class="desc" style="margin:-4px 0 12px;">Source: distributor inventory feed, Argentina, all six retail channels <b>excluding Stylus</b> (Stylus holds its own warehouse stock, which is a different metric than retail channel stock and isn't shown here). This section has its own filters below, independent of the Year / Retail / Product filters at the top of the page.</p>
+
+    <div class="filters" style="margin-bottom:20px;">
+      <div class="filter-group">
+        <span class="fl-label">Model</span>
+        <div class="chips" id="invFModel"></div>
+      </div>
+      <div class="filter-group">
+        <span class="fl-label">Retailer</span>
+        <div class="chips" id="invFRetail"></div>
+      </div>
+      <div class="filter-group">
+        <span class="fl-label">Week range</span>
+        <div class="week-range">
+          <input type="number" id="invWeekMin" class="week-input" min="1" max="52">
+          <span class="week-sep">—</span>
+          <input type="number" id="invWeekMax" class="week-input" min="1" max="52">
+        </div>
+      </div>
+      <button class="reset-btn" id="invResetBtn">↺ Reset filters</button>
+    </div>
 
     <div class="avg-summary" id="invSummary"></div>
 
@@ -767,6 +787,9 @@ const state = {
 };
 
 let allYears = [], allMonths = [], allRetail = [], allProducts = [], allWeeksNum = [];
+
+const invState = { models: new Set(), retailers: new Set(), weekMin: null, weekMax: null };
+let invAllModels = [], invAllRetailers = [], invAllWeeksNum = [];
 
 function fmt(n){ return Math.round(n).toLocaleString('es-AR'); }
 function fmtEN(n){ return Math.round(n).toLocaleString('en-US'); }
@@ -853,6 +876,36 @@ document.getElementById('resetBtn').onclick = () => {
   document.getElementById('searchBox').value = '';
   state.page = 1;
   refreshAll();
+};
+
+function renderInvFilters(){
+  buildChips('invFModel', invAllModels, invState.models, null, (v)=>{ toggleSetVal(invState.models, v, invAllModels); renderInventory(); });
+  buildChips('invFRetail', invAllRetailers, invState.retailers, null, (v)=>{ toggleSetVal(invState.retailers, v, invAllRetailers); renderInventory(); });
+  const wMin = document.getElementById('invWeekMin'), wMax = document.getElementById('invWeekMax');
+  if(document.activeElement !== wMin) wMin.value = invState.weekMin;
+  if(document.activeElement !== wMax) wMax.value = invState.weekMax;
+}
+
+function applyInvWeekRange(){
+  const wMin = document.getElementById('invWeekMin'), wMax = document.getElementById('invWeekMax');
+  let lo = parseInt(wMin.value, 10), hi = parseInt(wMax.value, 10);
+  if(isNaN(lo)) lo = invAllWeeksNum[0];
+  if(isNaN(hi)) hi = invAllWeeksNum[invAllWeeksNum.length-1];
+  lo = Math.max(1, Math.min(52, lo));
+  hi = Math.max(1, Math.min(52, hi));
+  if(lo > hi){ const t=lo; lo=hi; hi=t; }
+  invState.weekMin = lo; invState.weekMax = hi;
+  renderInventory();
+}
+document.getElementById('invWeekMin').addEventListener('change', applyInvWeekRange);
+document.getElementById('invWeekMax').addEventListener('change', applyInvWeekRange);
+
+document.getElementById('invResetBtn').onclick = () => {
+  invState.models = new Set(invAllModels);
+  invState.retailers = new Set(invAllRetailers);
+  invState.weekMin = invAllWeeksNum[0];
+  invState.weekMax = invAllWeeksNum[invAllWeeksNum.length-1];
+  renderInventory();
 };
 
 document.getElementById('searchBox').addEventListener('input', (e)=>{
@@ -2415,8 +2468,8 @@ function renderInventory(){
 
   const invWeekKey = d => d.y*100 + d.s;
 
-  // Last week with real activity across the whole feed — trailing weeks that just repeat
-  // the prior week's stock with zero sellout/sellin are a feed lag, not a real flat period.
+  // Last week with real activity across the WHOLE feed (unfiltered) — trailing weeks that
+  // just repeat the prior week's stock with zero sellout/sellin are a feed lag, not a real flat period.
   const soByWeek = {};
   INV.forEach(d=>{ const k=invWeekKey(d); soByWeek[k]=(soByWeek[k]||0)+d.so; });
   const allInvWeeks = [...new Set(INV.map(invWeekKey))].sort((a,b)=>a-b);
@@ -2424,11 +2477,30 @@ function renderInventory(){
   for(let i=allInvWeeks.length-1;i>=0;i--){
     if(soByWeek[allInvWeeks[i]] > 0){ lastActualWeek = allInvWeeks[i]; break; }
   }
-  const activeWeeks = allInvWeeks.filter(w=>w<=lastActualWeek);
-  const data = INV.filter(d=> invWeekKey(d) <= lastActualWeek);
 
-  const models = [...new Set(data.map(d=>d.mo))];
-  const retailers = [...new Set(data.map(d=>d.r))];
+  // Full universe of models/retailers/weeks, used to populate the filter chips and defaults —
+  // this doesn't shrink when the user narrows the filters, so options never disappear.
+  invAllModels = [...new Set(INV.map(d=>d.mo))];
+  invAllRetailers = [...new Set(INV.map(d=>d.r))];
+  invAllWeeksNum = [...new Set(INV.filter(d=>invWeekKey(d)<=lastActualWeek).map(d=>d.s))].sort((a,b)=>a-b);
+
+  if(invState.models.size === 0) invAllModels.forEach(m=>invState.models.add(m));
+  if(invState.retailers.size === 0) invAllRetailers.forEach(r=>invState.retailers.add(r));
+  if(invState.weekMin === null){ invState.weekMin = invAllWeeksNum[0]; invState.weekMax = invAllWeeksNum[invAllWeeksNum.length-1]; }
+
+  renderInvFilters();
+
+  const activeWeeks = allInvWeeks.filter(w=>{
+    const s = w % 100;
+    return w <= lastActualWeek && s >= invState.weekMin && s <= invState.weekMax;
+  });
+  const data = INV.filter(d=>
+    invWeekKey(d) <= lastActualWeek && invState.models.has(d.mo) && invState.retailers.has(d.r) &&
+    d.s >= invState.weekMin && d.s <= invState.weekMax
+  );
+
+  const models = invAllModels.filter(m=>invState.models.has(m));
+  const retailers = invAllRetailers.filter(r=>invState.retailers.has(r));
 
   // Weekly total ch / sellout / sellin per model
   const byModelWeek = {};
