@@ -712,9 +712,15 @@
     <div class="notes" id="invAlerts" style="margin-bottom:18px;"></div>
 
     <div class="chart-card full" style="margin-bottom:18px;">
-      <h3>Weekly channel inventory by model</h3>
-      <p class="desc">Ending on-hand stock at retail, summed across all six retailers, per week. Sharp drops toward zero are the clearest visual signal of a stockout.</p>
+      <h3>Weekly channel inventory &amp; sales by model</h3>
+      <p class="desc">Solid lines: ending on-hand stock at retail, summed across all six retailers, per model. Dashed lines (same color): that model's own sellout — units sold to end customers, summed across retailers. Inventory hitting zero while that model's own sellout is still positive is the clearest sign of a supply problem rather than a demand problem.</p>
       <div class="chart-holder tall"><canvas id="chartInvWeekly"></canvas></div>
+    </div>
+
+    <div class="chart-card full" style="margin-bottom:18px;">
+      <h3>Weekly channel inventory &amp; sales by retailer</h3>
+      <p class="desc">Solid lines: ending on-hand stock per retailer, summed across all models. Dashed lines (same color): that retailer's own sellout, summed across models — use it to see which retailer(s) kept selling right up to running out of stock.</p>
+      <div class="chart-holder tall"><canvas id="chartInvWeeklyByRetail"></canvas></div>
     </div>
 
     <h3 class="section-title">Peak, trough &amp; current stock by model</h3>
@@ -744,6 +750,7 @@
 let RAW = [];
 let INV = [];
 const INV_MODEL_COLORS = { 'Mini': '#0E9E8C', 'Mini X': '#6E5CD9', 'V4': '#2F6FE0', 'V5': '#C9861A' };
+const INV_RETAIL_COLORS = { 'Mercado Libre': '#0E9E8C', 'Frávega': '#C9861A', 'La Anónima': '#6E5CD9', 'On City': '#2F6FE0', 'Cetrogar': '#D6432F', 'Naldo Lombardi': '#8890A0' };
 
 const MONTH_NAMES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const RETAIL_COLORS = {
@@ -2432,6 +2439,15 @@ function renderInventory(){
     cell.ch += d.ch; cell.so += d.so; cell.si += d.si;
   });
 
+  // Weekly total ch / sellout per retailer (summed across models)
+  const byRetailWeek = {};
+  retailers.forEach(r=>{ byRetailWeek[r] = {}; activeWeeks.forEach(w=>{ byRetailWeek[r][w] = { ch:0, so:0 }; }); });
+  data.forEach(d=>{
+    const wk = invWeekKey(d);
+    const cell = byRetailWeek[d.r][wk];
+    cell.ch += d.ch; cell.so += d.so;
+  });
+
   // Peak / trough / current per model, and stockout-run detection
   const peakRows = [];
   const stockoutRows = [];
@@ -2503,25 +2519,59 @@ function renderInventory(){
     alertsEl.innerHTML = '<b>No full stockouts detected</b> — every tracked model kept some channel inventory across all available weeks.';
   }
 
-  // Chart: weekly channel inventory by model
+  // Chart: weekly channel inventory by model, with sellout by model (not total)
   const weekLabelsInv = activeWeeks.map(w=>weekLabelEN(w));
+
+  function inventorySelloutDatasets(groups, weekDataFn, colorMap){
+    const ds = [];
+    groups.forEach(g=>{
+      const color = colorMap[g] || '#8890A0';
+      ds.push({
+        label: g + ' — inventory', data: activeWeeks.map(w=>weekDataFn(g,w).ch),
+        borderColor: color, backgroundColor:'transparent', fill:false, tension:0.25,
+        pointRadius:0, pointHoverRadius:4, pointHitRadius:10, borderWidth:2, order:1
+      });
+      ds.push({
+        label: g + ' — sellout', data: activeWeeks.map(w=>weekDataFn(g,w).so),
+        borderColor: color, backgroundColor:'transparent', fill:false, tension:0.25,
+        borderDash:[5,4], borderWidth:1.5, pointRadius:0, pointHoverRadius:4, pointHitRadius:10, order:0
+      });
+    });
+    return ds;
+  }
+
   destroyChart('invWeekly');
   charts.invWeekly = new Chart(document.getElementById('chartInvWeekly'), {
     type:'line',
     data:{
       labels: weekLabelsInv,
-      datasets: models.map(mo=>({
-        label:mo,
-        data: activeWeeks.map(w=>byModelWeek[mo][w].ch),
-        borderColor: INV_MODEL_COLORS[mo] || '#8890A0',
-        backgroundColor:'transparent', fill:false, tension:0.25,
-        pointRadius:0, pointHoverRadius:4, pointHitRadius:10, borderWidth:2
-      }))
+      datasets: inventorySelloutDatasets(models, (mo,w)=>byModelWeek[mo][w], INV_MODEL_COLORS)
     },
     options:{
       responsive:true, maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
       plugins:{
-        legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
+        legend:{ position:'top', labels:{ color:'#5B6472', font:{size:10.5}, boxWidth:10 } },
+        tooltip:{ enabled:true, mode:'index', intersect:false, backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10, titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11}, callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmtEN(ctx.parsed.y) + ' units' } }
+      },
+      scales:{
+        x:{ ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+      }
+    }
+  });
+
+  // Chart: weekly channel inventory by retailer, with sellout by retailer (not total)
+  destroyChart('invWeeklyByRetail');
+  charts.invWeeklyByRetail = new Chart(document.getElementById('chartInvWeeklyByRetail'), {
+    type:'line',
+    data:{
+      labels: weekLabelsInv,
+      datasets: inventorySelloutDatasets(retailers, (r,w)=>byRetailWeek[r][w], INV_RETAIL_COLORS)
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ position:'top', labels:{ color:'#5B6472', font:{size:10.5}, boxWidth:10 } },
         tooltip:{ enabled:true, mode:'index', intersect:false, backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10, titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11}, callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmtEN(ctx.parsed.y) + ' units' } }
       },
       scales:{
