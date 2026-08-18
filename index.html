@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
   :root{
     --bg: #FFFFFF;
@@ -686,7 +687,7 @@
     <p class="desc" style="margin:-4px 0 12px;">For each product, "launch week" is the first week (within the active filter) with units sold greater than zero. Curves are aligned by weeks since launch, not by calendar date, so adoption speed can be compared across products.</p>
     <div class="chart-card full" style="margin-bottom:22px;">
       <h3>Units sold by week since launch</h3>
-      <p class="desc">Week 0 = first week with sales for each product.</p>
+      <p class="desc">Week 0 = first week with sales for each product. Showing the first 10 weeks, with each week's value labeled on the line — sized for exporting into a presentation.</p>
       <div class="chart-holder tall"><canvas id="chartEnLaunch"></canvas></div>
     </div>
 
@@ -772,6 +773,13 @@ let INV = [];
 const INV_MODEL_COLORS = { 'Mini': '#0E9E8C', 'Mini X': '#6E5CD9', 'V4': '#2F6FE0', 'V5': '#C9861A' };
 const INV_RETAIL_COLORS = { 'Mercado Libre': '#0E9E8C', 'Frávega': '#C9861A', 'La Anónima': '#6E5CD9', 'On City': '#2F6FE0', 'Cetrogar': '#D6432F', 'Naldo Lombardi': '#8890A0' };
 
+// Registered globally but off by default — only charts that explicitly opt in via
+// options.plugins.datalabels.display show on-point value labels.
+if(window.ChartDataLabels){
+  Chart.register(ChartDataLabels);
+  Chart.defaults.set('plugins.datalabels', { display:false });
+}
+
 const MONTH_NAMES = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const RETAIL_COLORS = {
   'Meli': '#0E9E8C', 'Frávega': '#C9861A', 'La Anónima': '#6E5CD9',
@@ -792,7 +800,7 @@ const invState = { models: new Set(), retailers: new Set(), weekMin: null, weekM
 let invAllModels = [], invAllRetailers = [], invAllWeeksNum = [];
 
 function fmt(n){ return Math.round(n).toLocaleString('es-AR'); }
-function fmtEN(n){ return Math.round(n).toLocaleString('en-US'); }
+function fmtEN(n){ return String(Math.round(n)); }
 function weekLabelEN(wk){ const y = Math.floor(wk/100), s = wk % 100; return `W${s} '${String(y).slice(2)}`; }
 
 function filtered(){
@@ -2290,16 +2298,24 @@ function renderEnglishSummary(){
   charts.enAvgProduct = new Chart(document.getElementById('chartEnAvgProduct'), {
     type:'bar',
     data:{ labels: modelStats.map(r=>r.group), datasets:[{ data: modelStats.map(r=>r.avgActive), backgroundColor: modelStats.map(r=>PRODUCT_COLORS[r.group]||'#8890A0'), borderRadius:4, maxBarThickness:40 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
-      scales:{ x:{ ticks:{ color:'#5B6472', font:{size:11} }, grid:{ display:false } }, y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } } } }
+    options:{ responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:20 } },
+      plugins:{
+        legend:{ display:false },
+        datalabels:{ display:true, align:'end', anchor:'end', offset:4, color:'#5B6472', font:{family:'JetBrains Mono', size:10.5, weight:'600'}, formatter:(v)=>fmtEN(v) }
+      },
+      scales:{ x:{ ticks:{ color:'#5B6472', font:{size:11} }, grid:{ display:false } }, y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10}, callback:(v)=>fmtEN(v) }, grid:{ color:'rgba(15,23,42,0.08)' } } } }
   });
 
   destroyChart('enAvgRetail');
   charts.enAvgRetail = new Chart(document.getElementById('chartEnAvgRetail'), {
     type:'bar',
     data:{ labels: retailStats.map(r=>r.group), datasets:[{ data: retailStats.map(r=>r.avgActive), backgroundColor: retailStats.map(r=>RETAIL_COLORS[r.group]||'#8890A0'), borderRadius:4, maxBarThickness:40 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
-      scales:{ x:{ ticks:{ color:'#5B6472', font:{size:10}, maxRotation:20 }, grid:{ display:false } }, y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } } } }
+    options:{ responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:20 } },
+      plugins:{
+        legend:{ display:false },
+        datalabels:{ display:true, align:'end', anchor:'end', offset:4, color:'#5B6472', font:{family:'JetBrains Mono', size:10.5, weight:'600'}, formatter:(v)=>fmtEN(v) }
+      },
+      scales:{ x:{ ticks:{ color:'#5B6472', font:{size:10}, maxRotation:20 }, grid:{ display:false } }, y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10}, callback:(v)=>fmtEN(v) }, grid:{ color:'rgba(15,23,42,0.08)' } } } }
   });
 
   // 3. Weekly sales evolution
@@ -2314,8 +2330,10 @@ function renderEnglishSummary(){
   charts.enWeekly = new Chart(document.getElementById('chartEnWeekly'), {
     type:'line',
     data:{ labels: weekLabelsEn, datasets:[
-      { label:'Units', data: weekValuesEn, borderColor:'#0E9E8C', backgroundColor:'rgba(14,158,140,0.10)', fill:true, tension:0.3, pointRadius:0, pointHoverRadius:5, pointHitRadius:12, pointBackgroundColor:'#0E9E8C', pointBorderColor:'#FFFFFF', pointBorderWidth:1.5, borderWidth:2, order:2 },
-      { label:'Trend', data: trendLineEn, borderColor:'#D6432F', backgroundColor:'transparent', fill:false, borderDash:[6,4], borderWidth:2, pointRadius:0, tension:0, order:1 }
+      { label:'Units', data: weekValuesEn, borderColor:'#0E9E8C', backgroundColor:'rgba(14,158,140,0.10)', fill:true, tension:0.3, pointRadius:0, pointHoverRadius:5, pointHitRadius:12, pointBackgroundColor:'#0E9E8C', pointBorderColor:'#FFFFFF', pointBorderWidth:1.5, borderWidth:2, order:2,
+        datalabels:{ display:'auto', align:'top', anchor:'end', offset:2, color:'#0E9E8C', font:{family:'JetBrains Mono', size:9, weight:'600'}, formatter:(v)=>fmtEN(v) } },
+      { label:'Trend', data: trendLineEn, borderColor:'#D6432F', backgroundColor:'transparent', fill:false, borderDash:[6,4], borderWidth:2, pointRadius:0, tension:0, order:1,
+        datalabels:{ display:false } }
     ]},
     options:{
       responsive:true, maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
@@ -2325,7 +2343,7 @@ function renderEnglishSummary(){
       },
       scales:{
         x:{ ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
-        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10}, callback:(v)=>fmtEN(v) }, grid:{ color:'rgba(15,23,42,0.08)' } }
       }
     }
   });
@@ -2349,6 +2367,7 @@ function renderEnglishSummary(){
     const wk = d.y*100+d.s;
     byProductWeekEn[d.p][wk] = (byProductWeekEn[d.p][wk]||0) + d.q;
   });
+  const LAUNCH_WINDOW_WEEKS = 10;
   const launchRowsEn = Object.keys(byProductWeekEn).map(p=>{
     const weekMap = byProductWeekEn[p];
     const wks = Object.keys(weekMap).map(Number).sort((a,b)=>a-b);
@@ -2358,14 +2377,29 @@ function renderEnglishSummary(){
     const series = []; let cursor = launchWk; let idx = 0;
     while(true){
       series.push(weekMap[cursor]||0);
-      if(cursor===lastWk || idx>200) break;
+      if(cursor===lastWk || idx>200 || series.length>=LAUNCH_WINDOW_WEEKS) break;
       cursor = nextWeekKey(cursor); idx++;
     }
     return { product:p, launchWk, series };
   }).filter(Boolean).sort((a,b)=>a.launchWk-b.launchWk);
 
-  const maxLenEn = Math.max(0, ...launchRowsEn.map(r=>r.series.length));
+  const maxLenEn = Math.min(LAUNCH_WINDOW_WEEKS, Math.max(0, ...launchRowsEn.map(r=>r.series.length)));
   const xLabelsEn = Array.from({length:maxLenEn}, (_,i)=>'W+'+i);
+
+  // Rank series by their average level in the window, then alternate label position
+  // top/bottom by rank (with a bigger offset for the 2nd series on each side) so labels on
+  // closely-bunched lines don't sit directly on top of each other.
+  const rankedEn = launchRowsEn.slice().sort((a,b)=>{
+    const avgA = a.series.reduce((x,y)=>x+y,0)/(a.series.length||1);
+    const avgB = b.series.reduce((x,y)=>x+y,0)/(b.series.length||1);
+    return avgB - avgA;
+  }).map(r=>r.product);
+  function labelPosFor(product){
+    const tier = rankedEn.indexOf(product);
+    return tier % 2 === 0
+      ? { align:'top', anchor:'end', offset: 4 + Math.floor(tier/2)*12 }
+      : { align:'bottom', anchor:'start', offset: 4 + Math.floor(tier/2)*12 };
+  }
 
   destroyChart('enLaunch');
   charts.enLaunch = new Chart(document.getElementById('chartEnLaunch'), {
@@ -2374,18 +2408,27 @@ function renderEnglishSummary(){
       labels: xLabelsEn,
       datasets: launchRowsEn.map(r=>({
         label:r.product, data:r.series, borderColor: PRODUCT_COLORS[r.product]||'#8890A0',
-        backgroundColor:'transparent', fill:false, tension:0.25, pointRadius:0, pointHoverRadius:4, pointHitRadius:10, borderWidth:2
+        backgroundColor:'transparent', fill:false, tension:0.25, pointRadius:3, pointHoverRadius:5, pointHitRadius:12, borderWidth:2,
+        pointBackgroundColor: PRODUCT_COLORS[r.product]||'#8890A0', pointBorderColor:'#FFFFFF', pointBorderWidth:1,
+        datalabels: labelPosFor(r.product)
       }))
     },
     options:{
       responsive:true, maintainAspectRatio:false, interaction:{ mode:'index', intersect:false },
+      layout:{ padding:{ top:22 } },
       plugins:{
         legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
-        tooltip:{ enabled:true, mode:'index', intersect:false, backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10, titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11}, callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmtEN(ctx.parsed.y) + ' units' } }
+        tooltip:{ enabled:true, mode:'index', intersect:false, backgroundColor:'#0B0E14', titleColor:'#FFFFFF', bodyColor:'#FFFFFF', borderColor:'rgba(255,255,255,0.1)', borderWidth:1, padding:10, titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11}, callbacks:{ label:(ctx)=> ' ' + ctx.dataset.label + ': ' + fmtEN(ctx.parsed.y) + ' units' } },
+        datalabels:{
+          display:true,
+          color: (ctx)=> ctx.dataset.borderColor,
+          font:{ family:'JetBrains Mono', size:9.5, weight:'600' },
+          formatter:(value)=> fmtEN(value)
+        }
       },
       scales:{
-        x:{ title:{ display:true, text:'Weeks since launch', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
-        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+        x:{ title:{ display:true, text:'Weeks since launch', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', maxRotation:0, autoSkip:false, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10}, callback:(v)=>fmtEN(v) }, grid:{ color:'rgba(15,23,42,0.08)' } }
       }
     }
   });
@@ -2416,12 +2459,15 @@ function renderEnglishSummary(){
     type:'scatter',
     data:{
       datasets:[
-        { label:'Campaigns', data: scatterPointsEn, backgroundColor:'#0E9E8C', borderColor:'#0E9E8C', pointRadius:6, pointHoverRadius:8 },
-        { label:'Regression', data: regLineEn, type:'line', borderColor:'#D6432F', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false, tension:0 }
+        { label:'Campaigns', data: scatterPointsEn, backgroundColor:'#0E9E8C', borderColor:'#0E9E8C', pointRadius:6, pointHoverRadius:8,
+          datalabels:{ display:true, align:'top', anchor:'end', offset:6, color:'#0E9E8C', font:{family:'JetBrains Mono', size:9.5, weight:'600'},
+            formatter:(v)=> (v.y>0?'+':'') + Math.round(v.y) + '%' } },
+        { label:'Regression', data: regLineEn, type:'line', borderColor:'#D6432F', borderDash:[6,4], borderWidth:2, pointRadius:0, fill:false, tension:0,
+          datalabels:{ display:false } }
       ]
     },
     options:{
-      responsive:true, maintainAspectRatio:false,
+      responsive:true, maintainAspectRatio:false, layout:{ padding:{ top:20 } },
       plugins:{
         legend:{ position:'top', labels:{ color:'#5B6472', font:{size:11}, boxWidth:10 } },
         tooltip:{
@@ -2429,16 +2475,16 @@ function renderEnglishSummary(){
           titleFont:{family:'JetBrains Mono', size:11}, bodyFont:{family:'JetBrains Mono', size:11},
           callbacks:{
             label:(ctx)=>{
-              if(ctx.dataset.label==='Regression') return ' regression: ' + ctx.parsed.y.toFixed(1) + '%';
+              if(ctx.dataset.label==='Regression') return ' regression: ' + Math.round(ctx.parsed.y) + '%';
               const p = ctx.raw;
-              return ' ' + p.label + ': ' + p.x + '% disc. → ' + (p.y>0?'+':'') + p.y.toFixed(1) + '%';
+              return ' ' + p.label + ': ' + p.x + '% disc. → ' + (p.y>0?'+':'') + Math.round(p.y) + '%';
             }
           }
         }
       },
       scales:{
-        x:{ title:{ display:true, text:'Discount (%)', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', callback:(v)=>v+'%', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
-        y:{ title:{ display:true, text:'Growth vs. prior 4 weeks (%)', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', callback:(v)=>v+'%', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+        x:{ title:{ display:true, text:'Discount (%)', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', callback:(v)=>Math.round(v)+'%', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
+        y:{ title:{ display:true, text:'Growth vs. prior 4 weeks (%)', color:'#5B6472', font:{size:11} }, ticks:{ color:'#8890A0', callback:(v)=>Math.round(v)+'%', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
       }
     }
   });
@@ -2601,12 +2647,14 @@ function renderInventory(){
       ds.push({
         label: g + ' — inventory', data: activeWeeks.map(w=>weekDataFn(g,w).ch),
         borderColor: color, backgroundColor:'transparent', fill:false, tension:0.25,
-        pointRadius:0, pointHoverRadius:4, pointHitRadius:10, borderWidth:2, order:1
+        pointRadius:0, pointHoverRadius:4, pointHitRadius:10, borderWidth:2, order:1,
+        datalabels:{ display:'auto', align:'top', anchor:'end', offset:2, color:color, font:{family:'JetBrains Mono', size:8.5, weight:'600'}, formatter:(v)=>fmtEN(v) }
       });
       ds.push({
         label: g + ' — sellout', data: activeWeeks.map(w=>weekDataFn(g,w).so),
         borderColor: color, backgroundColor:'transparent', fill:false, tension:0.25,
-        borderDash:[5,4], borderWidth:1.5, pointRadius:0, pointHoverRadius:4, pointHitRadius:10, order:0
+        borderDash:[5,4], borderWidth:1.5, pointRadius:0, pointHoverRadius:4, pointHitRadius:10, order:0,
+        datalabels:{ display:'auto', align:'bottom', anchor:'start', offset:2, color:color, font:{family:'JetBrains Mono', size:8, weight:'600'}, formatter:(v)=>fmtEN(v) }
       });
     });
     return ds;
@@ -2627,7 +2675,7 @@ function renderInventory(){
       },
       scales:{
         x:{ ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
-        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10}, callback:(v)=>fmtEN(v) }, grid:{ color:'rgba(15,23,42,0.08)' } }
       }
     }
   });
@@ -2648,7 +2696,7 @@ function renderInventory(){
       },
       scales:{
         x:{ ticks:{ color:'#8890A0', maxRotation:0, autoSkip:true, maxTicksLimit:16, font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } },
-        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10} }, grid:{ color:'rgba(15,23,42,0.08)' } }
+        y:{ ticks:{ color:'#8890A0', font:{family:'JetBrains Mono', size:10}, callback:(v)=>fmtEN(v) }, grid:{ color:'rgba(15,23,42,0.08)' } }
       }
     }
   });
